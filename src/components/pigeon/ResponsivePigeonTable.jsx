@@ -4,11 +4,21 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Edit, Eye, MoreHorizontal, ChevronLeft, ChevronRight, Phone, Tablet, Monitor } from 'lucide-react'
+import { Edit, Eye, MoreHorizontal, ChevronLeft, ChevronRight, Phone, Tablet, Monitor, Trash2, GitBranch } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useRouter } from 'next/navigation'
+import { useDeletePigeonMutation } from '@/redux/featured/pigeon/pigeonApi'
 
 const ResponsivePigeonTable = ({ data, isLoading, currentPage, onPageChange, onEdit }) => {
+  const router = useRouter()
+  const [deletePigeon] = useDeletePigeonMutation()
   const [viewMode, setViewMode] = useState('auto') // auto, table, cards
   const [isMobile, setIsMobile] = useState(false)
 
@@ -73,6 +83,26 @@ const ResponsivePigeonTable = ({ data, isLoading, currentPage, onPageChange, onE
   const handleNextPage = () => {
     if (currentPage < pagination?.totalPage) {
       onPageChange(currentPage + 1)
+    }
+  }
+
+  const handleView = (pigeonId) => {
+    router.push(`/pigeon-overview/${pigeonId}`)
+  }
+
+  const handlePedigree = (pigeonId) => {
+    router.push(`/pedigree-chart/${pigeonId}`)
+  }
+
+  const handleDelete = async (pigeonId) => {
+    if (window.confirm('Are you sure you want to delete this pigeon? This action cannot be undone.')) {
+      try {
+        await deletePigeon(pigeonId).unwrap()
+        // Optionally show success message
+      } catch (error) {
+        console.error('Failed to delete pigeon:', error)
+        alert('Failed to delete pigeon. Please try again.')
+      }
     }
   }
 
@@ -218,29 +248,48 @@ const ResponsivePigeonTable = ({ data, isLoading, currentPage, onPageChange, onE
 
         {/* Actions */}
         <div className="pigeon-mobile-card-actions">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onEdit(pigeon._id)}
-            className="flex-1"
-          >
-            <Edit className="h-4 w-4 mr-2" />
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1"
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            View
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+              >
+                <MoreHorizontal className="h-4 w-4 mr-2" />
+                Actions
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => onEdit(pigeon._id)}
+                className="cursor-pointer"
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit Pigeon
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleView(pigeon._id)}
+                className="cursor-pointer"
+              >
+                <Eye className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handlePedigree(pigeon._id)}
+                className="cursor-pointer"
+              >
+                <GitBranch className="h-4 w-4 mr-2" />
+                View Pedigree
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDelete(pigeon._id)}
+                className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Pigeon
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardContent>
     </Card>
@@ -385,30 +434,47 @@ const ResponsivePigeonTable = ({ data, isLoading, currentPage, onPageChange, onE
                       <TableCell>{pigeon.location}</TableCell>
 
                       <TableCell>
-                        <div className="flex items-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => onEdit(pigeon._id)}
-                            className="h-8 w-8 p-0 hover:bg-blue-100"
-                          >
-                            <Edit className="h-4 w-4 text-blue-600" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 hover:bg-gray-100"
-                          >
-                            <Eye className="h-4 w-4 text-gray-600" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-8 w-8 p-0 hover:bg-gray-100"
-                          >
-                            <MoreHorizontal className="h-4 w-4 text-gray-600" />
-                          </Button>
-                        </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8 w-8 p-0 hover:bg-gray-100"
+                            >
+                              <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => onEdit(pigeon._id)}
+                              className="cursor-pointer"
+                            >
+                              <Edit className="h-4 w-4 mr-2" />
+                              Edit Pigeon
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleView(pigeon._id)}
+                              className="cursor-pointer"
+                            >
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handlePedigree(pigeon._id)}
+                              className="cursor-pointer"
+                            >
+                              <GitBranch className="h-4 w-4 mr-2" />
+                              View Pedigree
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDelete(pigeon._id)}
+                              className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Pigeon
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))}

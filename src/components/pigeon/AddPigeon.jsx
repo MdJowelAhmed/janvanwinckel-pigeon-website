@@ -146,7 +146,6 @@ const onSubmit = async (data) => {
       ...data,
     };
 
-    // যদি "none" বা খালি থাকে, তাহলে field বাদ দাও
     if (!dataObject.fatherRingId || dataObject.fatherRingId === "none") {
       delete dataObject.fatherRingId;
     }
@@ -335,8 +334,8 @@ const onSubmit = async (data) => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   >
                     <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
+                    <option value="Hen">Hen</option>
+                    <option value="Cook">Cook</option>
                   </select>
                 </div>
               </div>

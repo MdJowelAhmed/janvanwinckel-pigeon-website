@@ -33,6 +33,15 @@ const pigeonApi = api.injectEndpoints({
       },
       providesTags: (result, error, id) => [{ type: "Pigeon", id }],
     }),
+    getPigeonPedigreeChartData: builder.query({
+      query: (id) => {
+        return {
+          method: "GET",
+          url: `/pigeon/family/${id}`,
+        };
+      },
+      providesTags: (result, error, id) => [{ type: "Pigeon", id }],
+    }),
 
     createPigeon: builder.mutation({
       query: (formData) => {
@@ -149,6 +158,7 @@ export const {
   useBulkUpdatePigeonsMutation,
   useExportPigeonsQuery,
   useImportPigeonsMutation,
+  useGetPigeonPedigreeChartDataQuery,
   // Lazy queries
   useLazySearchPigeonsQuery,
   useLazyExportPigeonsQuery,

@@ -4,11 +4,22 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Edit, Eye, MoreHorizontal, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Edit, Eye, MoreHorizontal, ChevronLeft, ChevronRight, Trash2, GitBranch } from 'lucide-react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Skeleton } from '@/components/ui/skeleton'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { useRouter } from 'next/navigation'
+import { useDeletePigeonMutation } from '@/redux/featured/pigeon/pigeonApi'
 
 const PigeonTable = ({ data, isLoading, currentPage, onPageChange, onEdit }) => {
+  const router = useRouter()
+  const [deletePigeon] = useDeletePigeonMutation()
+
   if (isLoading) {
     return <TableSkeleton />
   }
@@ -58,6 +69,26 @@ const PigeonTable = ({ data, isLoading, currentPage, onPageChange, onEdit }) => 
     }
   }
 
+  const handleView = (pigeonId) => {
+    router.push(`/pigeon-overview/${pigeonId}`)
+  }
+
+  const handlePedigree = (pigeonId) => {
+    router.push(`/pedigree-chart/${pigeonId}`)
+  }
+
+  const handleDelete = async (pigeonId) => {
+    if (window.confirm('Are you sure you want to delete this pigeon? This action cannot be undone.')) {
+      try {
+        await deletePigeon(pigeonId).unwrap()
+        // Optionally show success message
+      } catch (error) {
+        console.error('Failed to delete pigeon:', error)
+        alert('Failed to delete pigeon. Please try again.')
+      }
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Card>
@@ -81,7 +112,7 @@ const PigeonTable = ({ data, isLoading, currentPage, onPageChange, onEdit }) => 
                   <TableHead className="text-white">Pattern</TableHead>
                   <TableHead className="text-white">Status</TableHead>
                   <TableHead className="text-white">Gender</TableHead>
-                  <TableHead className="text-white">Rating</TableHead>
+                  {/* <TableHead className="text-white">Rating</TableHead> */}
                   <TableHead className="text-white">Color</TableHead>
                   <TableHead className="text-white">Location</TableHead>
                   <TableHead className="text-white w-20">Actions</TableHead>
@@ -169,11 +200,11 @@ const PigeonTable = ({ data, isLoading, currentPage, onPageChange, onEdit }) => 
                       </Badge>
                     </TableCell>
 
-                    <TableCell>
+                    {/* <TableCell>
                       <div className="text-yellow-500">
                         {getRatingStars(pigeon.breederRating || pigeon.racherRating || 0)}
                       </div>
-                    </TableCell>
+                    </TableCell> */}
 
                     <TableCell>
                       <Badge 
@@ -187,30 +218,47 @@ const PigeonTable = ({ data, isLoading, currentPage, onPageChange, onEdit }) => 
                     <TableCell>{pigeon.location}</TableCell>
 
                     <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => onEdit(pigeon._id)}
-                          className="h-8 w-8 p-0 hover:bg-blue-100"
-                        >
-                          <Edit className="h-4 w-4 text-blue-600" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-gray-100"
-                        >
-                          <Eye className="h-4 w-4 text-gray-600" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-gray-100"
-                        >
-                          <MoreHorizontal className="h-4 w-4 text-gray-600" />
-                        </Button>
-                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-gray-100"
+                          >
+                            <MoreHorizontal className="h-4 w-4 text-gray-600" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onClick={() => onEdit(pigeon._id)}
+                            className="cursor-pointer"
+                          >
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit Pigeon
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleView(pigeon._id)}
+                            className="cursor-pointer"
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handlePedigree(pigeon._id)}
+                            className="cursor-pointer"
+                          >
+                            <GitBranch className="h-4 w-4 mr-2" />
+                            View Pedigree
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDelete(pigeon._id)}
+                            className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete Pigeon
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
