@@ -7,18 +7,18 @@ const CommonLayout = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col bg-[#fff]">
       {/* Header */}
-      <LayoutWrapper>
+      {/* <LayoutWrapper> */}
         <Navbar />
         {/* Main content */}
         <div className="bg-[#fff] flex flex-col flex-grow">
-          <main className="container mx-auto mt-20 flex-1">
+          <main className=" mt-20 flex-1">
             <div className="">{children}</div>
           </main>
         </div>
 
         {/* Footer */}
         <Footer />
-      </LayoutWrapper>
+      {/* </LayoutWrapper> */}
     </div>
   );
 };

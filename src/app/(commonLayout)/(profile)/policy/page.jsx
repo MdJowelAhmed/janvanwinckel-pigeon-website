@@ -1,4 +1,5 @@
-import PrivacyPolicy from "@/components/privacyPolicy/PrivacyPolicy";
+
+import PrivacyPolicy from "@/components/footerLinks/PrivacyPolicy";
 import React from "react";
 
 const page = () => {

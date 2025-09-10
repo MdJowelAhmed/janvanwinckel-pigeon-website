@@ -7,7 +7,7 @@ const Database = ({color = "#fff"}) => (
 const CheckMarkSvg = ({color = "#fff"}) => (
 
  <svg xmlns="http://www.w3.org/2000/svg" width="91" height="90" viewBox="0 0 91 90" fill="none">
-  <g clip-path="url(#clip0_41575_236)">
+  <g clipPath="url(#clip0_41575_236)">
     <path d="M41.7336 65.4765L16.5 40.8037L20.4252 36.7383L41.4532 57.3457L86.4532 8L90.6588 11.6449L41.7336 65.4765Z" fill="#37B7C3"/>
   </g>
   <defs>
@@ -15,7 +15,7 @@ const CheckMarkSvg = ({color = "#fff"}) => (
       <rect width="89.7195" height="89.7195" fill="white" transform="translate(0.78125 0.280273)"/>
     </clipPath>
   </defs>
-  <g clip-path="url(#clip0_41575_236)">
+  <g clipPath="url(#clip0_41575_236)">
     <path d="M41.7336 65.4765L16.5 40.8037L20.4252 36.7383L41.4532 57.3457L86.4532 8L90.6588 11.6449L41.7336 65.4765Z" fill="#37B7C3"/>
   </g>
   <defs>

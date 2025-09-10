@@ -31,27 +31,27 @@ export default function LoginUser() {
 
 const handleSubmit = async (e) => {
     e.preventDefault();
+    router.push("/");
+    // try {
+    //   const res = await login({ email, password }).unwrap();
+    //   console.log(res);
+    //   const accessToken = res.data.accessToken;
+    //   console.log(accessToken);
 
-    try {
-      const res = await login({ email, password }).unwrap();
-      console.log(res);
-      const accessToken = res.data.accessToken;
-      console.log(accessToken);
-
-      // Save tokens to localStorage
-      localStorage.setItem("token", accessToken);
+    //   // Save tokens to localStorage
+    //   localStorage.setItem("token", accessToken);
 
 
-      // Dispatch only accessToken (no user)
-      dispatch(loginSuccess(accessToken));
+    //   // Dispatch only accessToken (no user)
+    //   dispatch(loginSuccess(accessToken));
 
-      // Redirect
-      router.push("/");
-    } catch (error) {
-      console.error("Login failed:", error);
-      const errorMessage = error?.data?.message || error?.message || "Login failed";
-      toast.error(errorMessage);
-    }
+    //   // Redirect
+    //   router.push("/");
+    // } catch (error) {
+    //   console.error("Login failed:", error);
+    //   const errorMessage = error?.data?.message || error?.message || "Login failed";
+    //   toast.error(errorMessage);
+    // }
   };
 
   return (

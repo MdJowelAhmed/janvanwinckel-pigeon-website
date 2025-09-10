@@ -403,10 +403,10 @@ export default function Navbar() {
   // Navigation items
   const navItems = [
     { name: "Home", path: "/" },
-    { name: "Add Pigeon", path: "/add-pigeon" },
-    { name: "Loft Overview", path: "/loft-overview" },
-
-    { name: "Subscription", path: "/subscription" },
+    { name: "FAQ", path: "/faq" },
+    { name: "Contact Us", path: "/contact" },
+    { name: "Dashboard", path: "/dashboard" },
+    { name: "Profile", path: "/profile" },
   ];
 
   // Profile menu items with icons
@@ -450,45 +450,52 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className="text-white fixed w-full top-0 left-0 shadow-lg z-50 bg-[#fff]">
+      <nav className="text-white fixed w-full top-0 left-0 shadow-lg z-50 bg-[#181A2F]">
         <div className="container mx-auto flex justify-between items-center h-20 px-4">
-          {/* Logo */}
-          <Link
-            href="/"
-            className="flex items-center space-x-2 text-lg font-bold"
-          >
-            <Image
-              src="/assests/logo.png"
-              alt="Logo"
-              width={100}
-              height={100}
-              className="w-16 h-10"
-            />
-          </Link>
+          {/* Left Side - Logo and Company Name */}
+          <div className="flex items-center space-x-3">
+            <Link
+              href="/"
+              className="flex items-center space-x-2 text-lg font-bold"
+            >
+              <Image
+                src="/assets/logo.png"
+                alt="Logo"
+                width={100}
+                height={100}
+                className="w-16 h-10 object-contain"
+              />
+            </Link>
+            <div className="text-primary-text font-bold text-2xl">
+              Glass File
+            </div>
+          </div>
 
-          {/* Desktop Navigation */}
-          <ul className="hidden md:flex space-x-6">
-            {navItems.map((item) => (
-              <li key={item.name}>
-                <Link
-                  href={item.path}
-                  className={`relative pb-1 text-black transition-all duration-300 ease-in-out ${
-                    pathname === item.path
-                      ? "border-b-2 border-primary text-black"
-                      : "hover:border-b-2 hover:border-primary text-black"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {/* Right Side - Navigation Links and User Controls */}
+          <div className="flex items-center space-x-6">
+            {/* Desktop Navigation */}
+            <ul className="hidden md:flex space-x-6">
+              {navItems.map((item) => (
+                <li key={item.name}>
+                  <Link
+                    href={item.path}
+                    className={`relative pb-1 text-primary-text transition-all duration-300 ease-in-out ${
+                      pathname === item.path
+                        ? "border-b-2 border-primary text-primary-text"
+                        : "hover:border-b-2 hover:border-primary text-primary-text"
+                    }`}
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
 
-          {/* User Controls */}
-          <div className="flex items-center space-x-4">
+            {/* User Controls */}
+            <div className="flex items-center space-x-4">
             {/* Mobile Menu Button */}
             <button
-              className="md:hidden text-black p-2 rounded-md hover:bg-gray-100 transition-colors"
+              className="md:hidden text-primary-text p-2 rounded-md hover:bg-gray-100 transition-colors"
               onClick={() => setIsOpen(!isOpen)}
               aria-label="Toggle mobile menu"
             >
@@ -515,12 +522,12 @@ export default function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setIsNotificationModalOpen(true)}
-                  className="relative p-2 text-black hover:bg-gray-100 rounded-full transition-colors"
+                  className="relative p-2 text-primary-text hover:bg-gray-100 rounded-full transition-colors"
                   aria-label="Notifications"
                 >
                   <FaBell size={20} />
                   {unreadCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 bg-red-500 text-white text-xs min-w-[18px] h-[18px] flex items-center justify-center rounded-full p-0">
+                    <Badge className="absolute -top-1 -right-1 bg-red-500 text-primary-text text-xs min-w-[18px] h-[18px] flex items-center justify-center rounded-full p-0">
                       {unreadCount > 99 ? "99+" : unreadCount}
                     </Badge>
                   )}
@@ -531,7 +538,7 @@ export default function Navbar() {
             {/* Login Button - Show when no user is logged in */}
             {!userData?._id ? (
               <Link href="/login">
-                <button className="bg-primary text-white px-4 py-2 rounded-md hover:bg-primary/90 transition-colors duration-200 flex items-center gap-2">
+                <button className="bg-primary text-primary-text px-4 py-2 rounded-md hover:bg-primary/90 transition-colors duration-200 flex items-center gap-2">
                   <FaUser size={16} />
                   Login
                 </button>
@@ -702,7 +709,8 @@ export default function Navbar() {
                   </div>
                 )}
               </div>
-            )}
+            )})
+            </div>
           </div>
         </div>
 

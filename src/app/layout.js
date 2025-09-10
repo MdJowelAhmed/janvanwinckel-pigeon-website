@@ -1,11 +1,11 @@
-import { Geist, Geist_Mono, Poppins } from "next/font/google";
+import { Geist, Geist_Mono, Poppins, Montserrat } from "next/font/google";
 import "./globals.css";
 import Providers from "@/components/share/provider";
 import { Toaster } from "sonner";
 import LayoutWrapper from "@/components/LayoutWrapper";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
 });
 
@@ -29,7 +29,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${poppins.variable} ${geistMono.variable} antialiased `}
+        className={`${poppins.variable} ${geistMono.variable} ${montserrat.variable} antialiased `}
       >
         <Providers>
          {/* <LayoutWrapper> */}
