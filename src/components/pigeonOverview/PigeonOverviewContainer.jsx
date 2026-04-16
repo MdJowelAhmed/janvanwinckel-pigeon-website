@@ -29,6 +29,7 @@ import {
 import { useMyProfileQuery } from "@/redux/featured/auth/authApi";
 import PigeonPdfExport from "./OverviewExport";
 import SyncHorizontalScroll from "../share/Scrollbar";
+import RichTextDisplay from "../pigeon/RichTextDisplay";
 
 const PigeonOverviewContainer = () => {
   const { id } = useParams();
@@ -395,13 +396,15 @@ const PigeonOverviewContainer = () => {
                   </strong>
                 </p>
 
-                 <p className="text-sm text-gray-600">
-                  Story:{" "}
-                  <strong className="text-accent-foreground whitespace-pre-line">
-                    {pigeon?.fatherRingId?.shortInfo?.replace(/\\n/g, "\n") ||
-                      "N/A"}
-                  </strong>
-                </p>
+                 <div className="text-sm text-gray-600">
+                  <span>Story: </span>
+                  <div className="text-accent-foreground font-semibold mt-0.5">
+                    <RichTextDisplay
+                      html={pigeon?.fatherRingId?.shortInfo}
+                      fallback="N/A"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex gap-1">
                   <p className="font-normal text-[14px]">Results: </p>
@@ -411,7 +414,13 @@ const PigeonOverviewContainer = () => {
                       {Array.isArray(pigeon?.fatherRingId?.addresults) &&
                       pigeon?.fatherRingId?.addresults.length > 0
                         ? pigeon?.fatherRingId?.addresults.map(
-                            (result, index) => <div key={index}>{result}</div>
+                            (result, index) => (
+                              <RichTextDisplay
+                                key={index}
+                                html={result}
+                                className="mb-1"
+                              />
+                            )
                           )
                         : "N/A"}
                     </span>
@@ -462,13 +471,15 @@ const PigeonOverviewContainer = () => {
                   </p>
               
 
-                <p className="text-sm text-gray-600">
-                  Story:{" "}
-                  <strong className="text-accent-foreground whitespace-pre-line">
-                    {pigeon?.motherRingId?.shortInfo?.replace(/\\n/g, "\n") ||
-                      "N/A"}
-                  </strong>
-                </p>
+                <div className="text-sm text-gray-600">
+                  <span>Story: </span>
+                  <div className="text-accent-foreground font-semibold mt-0.5">
+                    <RichTextDisplay
+                      html={pigeon?.motherRingId?.shortInfo}
+                      fallback="N/A"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex gap-1">
                   <p className="font-normal text-[14px]">Results: </p>
@@ -478,7 +489,13 @@ const PigeonOverviewContainer = () => {
                       {Array.isArray(pigeon?.motherRingId?.addresults) &&
                       pigeon?.motherRingId?.addresults.length > 0
                         ? pigeon?.motherRingId?.addresults.map(
-                            (result, index) => <div key={index}>{result}</div>
+                            (result, index) => (
+                              <RichTextDisplay
+                                key={index}
+                                html={result}
+                                className="mb-1"
+                              />
+                            )
                           )
                         : "N/A"}
                     </span>
@@ -568,16 +585,12 @@ const PigeonOverviewContainer = () => {
             </div>
 
             <div>
-              <p>
+              <p className="mb-1">
                 <strong className="text-accent-foreground font-semibold">
-                  Your Story:{" "}
+                  Your Story
                 </strong>
-                <span className="whitespace-pre-line">
-                  {pigeon?.shortInfo
-                    ? pigeon.shortInfo.replace(/\\n/g, "\n")
-                    : "N/A"}
-                </span>
               </p>
+              <RichTextDisplay html={pigeon?.shortInfo} fallback="N/A" />
             </div>
             {pigeon?.notes && (
               <div>
@@ -735,7 +748,7 @@ const PigeonOverviewContainer = () => {
                 </label>
                 <div className="text-gray-700 space-y-1">
                   {pigeon.addresults.map((result, index) => (
-                    <p key={index}>{result}</p>
+                    <RichTextDisplay key={index} html={result} />
                   ))}
                 </div>
               </div>
@@ -870,7 +883,10 @@ const PigeonOverviewContainer = () => {
                     <Separator />
                     <div className="space-y-2">
                       <h4 className="font-semibold">Short Info</h4>
-                      <p className="text-white">{selectedPigeon.shortInfo}</p>
+                      <RichTextDisplay
+                        html={selectedPigeon.shortInfo}
+                        className="text-white"
+                      />
                     </div>
                   </>
                 )}

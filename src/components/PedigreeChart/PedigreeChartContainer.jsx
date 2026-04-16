@@ -478,6 +478,14 @@ export default function PigeonPedigreeChart() {
     }
   }, [nodes, edges, pedigreeData]);
 
+  const exportToJPG = useCallback(async () => {
+    try {
+      await exportPedigreeToJPG(nodes, edges, pedigreeData);
+    } catch (error) {
+      alert("Error exporting JPG. Please try again.");
+    }
+  }, [nodes, edges, pedigreeData]);
+
   const exportToPDFWithGenerations = useCallback(
     async (genCount) => {
       try {
@@ -522,6 +530,13 @@ export default function PigeonPedigreeChart() {
           >
             <DownloadCloud className="h-4 w-4" />
             Export as Excel
+          </Button>
+          <Button
+            onClick={exportToJPG}
+            className="bg-primary text-white py-6 rounded-sm hover:text-white flex items-center gap-2"
+          >
+            <DownloadCloud className="h-4 w-4" />
+            Export as JPG
           </Button>
 
           {/* PDF Export Dropdown */}

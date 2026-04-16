@@ -3,6 +3,7 @@ import jsPDF from "jspdf";
 import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
+import { stripHtmlToText } from "@/lib/richTextUtils";
 
 const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
   // Get image URL helper function
@@ -235,7 +236,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         fatherY += 5;
 
         const fatherStoryLines = pdf.splitTextToSize(
-          pigeon.fatherRingId.shortInfo,
+          stripHtmlToText(pigeon.fatherRingId.shortInfo),
           columnWidth - 2
         );
 
@@ -248,7 +249,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         fatherY += 3;
       }
 
-      // Father Results (শুধু থাকলে দেখাবে)
+  
       if (
         pigeon?.fatherRingId?.addresults &&
         Array.isArray(pigeon.fatherRingId.addresults) &&
@@ -263,7 +264,9 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7);
         pigeon.fatherRingId.addresults.forEach((result) => {
-          const cleanText = result.replace(/^\d+[\.\)]\s*/, "").trim();
+          const cleanText = stripHtmlToText(String(result))
+            .replace(/^\d+[\.\)]\s*/, "")
+            .trim();
           const resultLines = pdf.splitTextToSize(
             cleanText || "N/A",
             columnWidth - 2
@@ -275,7 +278,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         });
       }
 
-      // ========== MOTHER SECTION (RIGHT) ==========
+
       pdf.setFillColor(55, 183, 195);
       pdf.rect(rightParentX, parentsStartY - 5, columnWidth, 8, "F");
       pdf.setTextColor(255, 255, 255);
@@ -336,7 +339,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         motherY += 5;
 
         const motherStoryLines = pdf.splitTextToSize(
-          pigeon.motherRingId.shortInfo,
+          stripHtmlToText(pigeon.motherRingId.shortInfo),
           columnWidth - 2
         );
 
@@ -364,7 +367,9 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7);
         pigeon.motherRingId.addresults.forEach((result) => {
-          const cleanText = result.replace(/^\d+[\.\)]\s*/, "").trim();
+          const cleanText = stripHtmlToText(String(result))
+            .replace(/^\d+[\.\)]\s*/, "")
+            .trim();
           const resultLines = pdf.splitTextToSize(
             cleanText || "N/A",
             columnWidth - 2
@@ -427,7 +432,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         yPosition += 6;
 
         const storyLines = pdf.splitTextToSize(
-          pigeon.shortInfo,
+          stripHtmlToText(pigeon.shortInfo),
           pageWidth - 2 * margin
         );
 
@@ -598,7 +603,8 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
           checkPageBreak(6);
           pdf.setFontSize(9);
           pdf.setFont("helvetica", "normal");
-          pdf.text(`${index + 1}. ${result}`, margin + 2, yPosition);
+          const line = stripHtmlToText(String(result));
+          pdf.text(`${index + 1}. ${line}`, margin + 2, yPosition);
           yPosition += 6;
         });
       }

@@ -25,6 +25,12 @@ import { ChevronDown } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import {
+  addresultsArrayToHtml,
+  htmlToAddresultsArray,
+  sanitizeRichHtml,
+} from "@/lib/richTextUtils";
+import TooltipRichTextField from "./TooltipRichTextField";
 import { toast } from "sonner";
 import { getImageUrl } from "../share/imageUrl";
 import PigeonPhotosSlider from "./addPigeon/PigeonPhotoSlider";
@@ -489,7 +495,7 @@ const AddPigeonContainer = ({ pigeonId }) => {
         verified: pigeon.verified || false,
         iconic: pigeon.iconic || false,
         addresults: Array.isArray(pigeon.addresults)
-          ? pigeon.addresults.join("\n")
+          ? addresultsArrayToHtml(pigeon.addresults)
           : pigeon.addresults || "",
         iconicScore: pigeon.iconicScore || 0,
       });
@@ -557,7 +563,7 @@ const AddPigeonContainer = ({ pigeonId }) => {
         name: data.name,
         country: data.country,
         birthYear: parseInt(data.birthYear),
-        shortInfo: data.shortInfo,
+        shortInfo: sanitizeRichHtml(data.shortInfo || ""),
         breeder: breederSearchTerm || data.breeder,
         color: data.color,
         racingRating: parseInt(data.racingRating) || 0,
@@ -571,7 +577,7 @@ const AddPigeonContainer = ({ pigeonId }) => {
         motherRingId: motherSearchTerm || selectedMotherId || "",
         verified: Boolean(data.verified),
         iconic: Boolean(data.iconic),
-        addresults: data.addresults ? data.addresults.split("\n") : [],
+        addresults: sanitizeRichHtml(data.addresults || ""),
         iconicScore: parseInt(data.iconicScore) || 0,
         remaining: isEditMode
           ? photos.filter((photo) => !photo.file).map((photo) => photo.url)
@@ -939,15 +945,21 @@ const AddPigeonContainer = ({ pigeonId }) => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Story Line
                   </label>
-                  <textarea
-                    {...register("shortInfo")}
-                    placeholder={`For example:
+                  <Controller
+                    name="shortInfo"
+                    control={control}
+                    render={({ field }) => (
+                      <TooltipRichTextField
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder={`For example:
 Son of Burj Khalifa
 Winner of the Dubai OLR
 5 times 1st price winner
 Bought for USD 50,000`}
-                    rows={5}
-                    className="w-full px-3 py-[14px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 resize-none"
+                        minHeightClass="min-h-[150px]"
+                      />
+                    )}
                   />
                 </div>
 
@@ -955,13 +967,20 @@ Bought for USD 50,000`}
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Pigeon Results
                   </label>
-                  <textarea
-                    {...register("addresults")}
-                    placeholder={`For example:
+                  <Controller
+                    name="addresults"
+                    control={control}
+                    render={({ field }) => (
+                      <TooltipRichTextField
+                        value={field.value || ""}
+                        onChange={field.onChange}
+                        placeholder={`For example:
 1st/828p Quiévrain 108km
 4th/3265p Melun 287km
 6th/3418p HotSpot 6 Dubai OLR`}
-                    className="w-full px-3 h-[150px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        minHeightClass="min-h-[150px]"
+                      />
+                    )}
                   />
                 </div>
               </div>
