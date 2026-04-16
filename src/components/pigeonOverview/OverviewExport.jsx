@@ -43,6 +43,131 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
     }
   };
 
+  const renderHtmlContent = (html, startX, startY, maxWidth, pdf) => {
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+  
+    let y = startY;
+  
+    const lineHeight = 5;
+    const listIndent = 4;
+  
+    const drawListMarker = (type, x, yPos) => {
+      if (type === "arrow") {
+        const centerY = yPos - 1.6;
+        const arrowStartX = x;
+        const arrowEndX = x + 2.8;
+        pdf.setDrawColor(0, 0, 0);
+        pdf.setLineWidth(0.35);
+        pdf.line(arrowStartX, centerY, arrowEndX, centerY);
+        pdf.line(arrowEndX - 1.1, centerY - 0.9, arrowEndX, centerY);
+        pdf.line(arrowEndX - 1.1, centerY + 0.9, arrowEndX, centerY);
+        return;
+      }
+
+      if (type === "stripe") {
+        pdf.setDrawColor(0, 0, 0);
+        pdf.setLineWidth(0.35);
+        pdf.line(x, yPos - 3.2, x, yPos - 0.4);
+        return;
+      }
+
+      pdf.text("•", x, yPos);
+    };
+  
+    const renderNode = (node, indent = 0, listType = "disc") => {
+      // TEXT NODE
+      if (node.nodeType === 3) {
+        const text = node.textContent.replace(/\s+/g, " ").trim();
+  
+        if (text) {
+          const lines = pdf.splitTextToSize(
+            text,
+            maxWidth - indent - listIndent
+          );
+  
+          lines.forEach((line) => {
+            pdf.text(line, startX + indent + listIndent, y);
+            y += lineHeight;
+          });
+        }
+      }
+  
+      // ELEMENT NODE
+      if (node.nodeType === 1) {
+        const tag = node.tagName.toLowerCase();
+  
+        // PARAGRAPH
+        if (tag === "p") {
+          node.childNodes.forEach((child) =>
+            renderNode(child, indent, listType)
+          );
+          y += 2;
+        }
+  
+        // UNORDERED LIST
+        if (tag === "ul") {
+          let type = "disc";
+  
+          if (node.classList.contains("rich-ul-arrow")) {
+            type = "arrow";
+          } else if (node.classList.contains("rich-ul-stripe")) {
+            type = "stripe";
+          }
+  
+          node.childNodes.forEach((child) =>
+            renderNode(child, indent + listIndent, type)
+          );
+  
+          y += 2;
+        }
+  
+        // LIST ITEM
+        if (tag === "li") {
+          const symbolX = startX + indent;
+          const textX = startX + indent + listIndent;
+  
+          // symbol draw
+          drawListMarker(listType, symbolX, y);
+  
+          // child text draw (with spacing)
+          node.childNodes.forEach((child) =>
+            renderNode(child, indent + listIndent, listType)
+          );
+  
+          y += 2;
+        }
+  
+        // BOLD
+        if (tag === "strong") {
+          pdf.setFont("helvetica", "bold");
+          node.childNodes.forEach((child) =>
+            renderNode(child, indent, listType)
+          );
+          pdf.setFont("helvetica", "normal");
+        }
+  
+        // ITALIC
+        if (tag === "em") {
+          pdf.setFont("helvetica", "italic");
+          node.childNodes.forEach((child) =>
+            renderNode(child, indent, listType)
+          );
+          pdf.setFont("helvetica", "normal");
+        }
+  
+        // LINE BREAK
+        if (tag === "br") {
+          y += lineHeight;
+        }
+      }
+    };
+  
+    tempDiv.childNodes.forEach((node) => renderNode(node));
+  
+    return y;
+  };
+
   const handleExportPDF = async () => {
     try {
       const pdf = new jsPDF("p", "mm", "a4");
@@ -431,17 +556,20 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         pdf.text("Your Story:", margin, yPosition);
         yPosition += 6;
 
-        const storyLines = pdf.splitTextToSize(
-          stripHtmlToText(pigeon.shortInfo),
-          pageWidth - 2 * margin
+        yPosition = renderHtmlContent(
+          pigeon.shortInfo,
+          margin,
+          yPosition,
+          pageWidth - 2 * margin,
+          pdf
         );
 
-        pdf.setFont("helvetica", "normal");
-        storyLines.forEach((line) => {
-          checkPageBreak(5);
-          pdf.text(line, margin, yPosition);
-          yPosition += 5;
-        });
+        // pdf.setFont("helvetica", "normal");
+        // storyLines.forEach((line) => {
+        //   checkPageBreak(5);
+        //   pdf.text(line, margin, yPosition);
+        //   yPosition += 5;
+        // });
 
         yPosition += 5;
       }
@@ -603,8 +731,23 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
           checkPageBreak(6);
           pdf.setFontSize(9);
           pdf.setFont("helvetica", "normal");
-          const line = stripHtmlToText(String(result));
-          pdf.text(`${index + 1}. ${line}`, margin + 2, yPosition);
+          pdf.setFont("helvetica", "bold");
+          // pdf.text(`${index + 1}.`, margin, yPosition);
+          pdf.setFont("helvetica", "normal");
+          
+          yPosition += 3;
+
+          yPosition = renderHtmlContent(
+            result,
+            margin + 4,
+            yPosition,
+            pageWidth - 2 * margin - 4,
+            pdf
+          );
+          
+          yPosition += 5; // only one spacing
+          
+          yPosition += 3;
           yPosition += 6;
         });
       }
