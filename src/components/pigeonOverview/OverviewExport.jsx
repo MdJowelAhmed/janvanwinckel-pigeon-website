@@ -3,7 +3,7 @@ import jsPDF from "jspdf";
 import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { stripHtmlToText } from "@/lib/richTextUtils";
+import { addresultsArrayToHtml, stripHtmlToText } from "@/lib/richTextUtils";
 
 const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
   // Get image URL helper function
@@ -43,32 +43,47 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
     }
   };
 
-  const renderHtmlContent = (html, startX, startY, maxWidth, pdf) => {
+  const renderHtmlContent = (
+    html,
+    startX,
+    startY,
+    maxWidth,
+    pdf,
+    options = {}
+  ) => {
     const tempDiv = document.createElement("div");
     tempDiv.innerHTML = html;
   
     let y = startY;
   
-    const lineHeight = 5;
-    const listIndent = 4;
+    const lineHeight = Number(options.lineHeight ?? 2.5);
+    // Distance between marker and text (mm)
+    const listIndent = Number(options.listIndent ?? 1.7);
+    const blockSpacing = Number(options.blockSpacing ?? Math.max(1, lineHeight * 0.8));
+    // Extra gap between bullet items (li -> next li)
+    const itemSpacing = Number(options.itemSpacing ?? Math.max(0.3, lineHeight * 0.25));
   
     const drawListMarker = (type, x, yPos) => {
       if (type === "arrow") {
-        const centerY = yPos - 1.6;
+        // Scale marker geometry with lineHeight so it stays vertically centered
+        // even when lineHeight is reduced (e.g. 2.5).
+        const centerY = yPos - lineHeight * 0.32;
         const arrowStartX = x;
-        const arrowEndX = x + 2.8;
+        const arrowEndX = x + Math.max(2.0, lineHeight * 0.56);
+        const headDX = Math.max(0.6, lineHeight * 0.22);
+        const headDY = Math.max(0.45, lineHeight * 0.18);
         pdf.setDrawColor(0, 0, 0);
         pdf.setLineWidth(0.35);
         pdf.line(arrowStartX, centerY, arrowEndX, centerY);
-        pdf.line(arrowEndX - 1.1, centerY - 0.9, arrowEndX, centerY);
-        pdf.line(arrowEndX - 1.1, centerY + 0.9, arrowEndX, centerY);
+        pdf.line(arrowEndX - headDX, centerY - headDY, arrowEndX, centerY);
+        pdf.line(arrowEndX - headDX, centerY + headDY, arrowEndX, centerY);
         return;
       }
 
       if (type === "stripe") {
         pdf.setDrawColor(0, 0, 0);
         pdf.setLineWidth(0.35);
-        pdf.line(x, yPos - 3.2, x, yPos - 0.4);
+        pdf.line(x, yPos - lineHeight * 0.64, x, yPos - lineHeight * 0.08);
         return;
       }
 
@@ -102,7 +117,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
           node.childNodes.forEach((child) =>
             renderNode(child, indent, listType)
           );
-          y += 2;
+          y += blockSpacing;
         }
   
         // UNORDERED LIST
@@ -119,13 +134,12 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
             renderNode(child, indent + listIndent, type)
           );
   
-          y += 2;
+          y += blockSpacing;
         }
   
         // LIST ITEM
         if (tag === "li") {
           const symbolX = startX + indent;
-          const textX = startX + indent + listIndent;
   
           // symbol draw
           drawListMarker(listType, symbolX, y);
@@ -135,7 +149,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
             renderNode(child, indent + listIndent, listType)
           );
   
-          y += 2;
+          y += itemSpacing;
         }
   
         // BOLD
@@ -359,18 +373,15 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         pdf.setFontSize(8);
         pdf.text("Story:", leftParentX, fatherY);
         fatherY += 5;
-
-        const fatherStoryLines = pdf.splitTextToSize(
-          stripHtmlToText(pigeon.fatherRingId.shortInfo),
-          columnWidth - 2
-        );
-
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7);
-        fatherStoryLines.forEach((line) => {
-          pdf.text(line, leftParentX, fatherY);
-          fatherY += 4;
-        });
+        fatherY = renderHtmlContent(
+          pigeon.fatherRingId.shortInfo,
+          leftParentX,
+          fatherY,
+          columnWidth - 2,
+          pdf
+        );
         fatherY += 3;
       }
 
@@ -388,19 +399,13 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
 
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7);
-        pigeon.fatherRingId.addresults.forEach((result) => {
-          const cleanText = stripHtmlToText(String(result))
-            .replace(/^\d+[\.\)]\s*/, "")
-            .trim();
-          const resultLines = pdf.splitTextToSize(
-            cleanText || "N/A",
-            columnWidth - 2
-          );
-          resultLines.forEach((line) => {
-            pdf.text(line, leftParentX, fatherY);
-            fatherY += 4;
-          });
-        });
+        fatherY = renderHtmlContent(
+          addresultsArrayToHtml(pigeon.fatherRingId.addresults),
+          leftParentX,
+          fatherY,
+          columnWidth - 2,
+          pdf
+        );
       }
 
 
@@ -462,18 +467,15 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         pdf.setFontSize(8);
         pdf.text("Story:", rightParentX, motherY);
         motherY += 5;
-
-        const motherStoryLines = pdf.splitTextToSize(
-          stripHtmlToText(pigeon.motherRingId.shortInfo),
-          columnWidth - 2
-        );
-
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7);
-        motherStoryLines.forEach((line) => {
-          pdf.text(line, rightParentX, motherY);
-          motherY += 4;
-        });
+        motherY = renderHtmlContent(
+          pigeon.motherRingId.shortInfo,
+          rightParentX,
+          motherY,
+          columnWidth - 2,
+          pdf
+        );
         motherY += 3;
       }
 
@@ -491,19 +493,13 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
 
         pdf.setFont("helvetica", "normal");
         pdf.setFontSize(7);
-        pigeon.motherRingId.addresults.forEach((result) => {
-          const cleanText = stripHtmlToText(String(result))
-            .replace(/^\d+[\.\)]\s*/, "")
-            .trim();
-          const resultLines = pdf.splitTextToSize(
-            cleanText || "N/A",
-            columnWidth - 2
-          );
-          resultLines.forEach((line) => {
-            pdf.text(line, rightParentX, motherY);
-            motherY += 4;
-          });
-        });
+        motherY = renderHtmlContent(
+          addresultsArrayToHtml(pigeon.motherRingId.addresults),
+          rightParentX,
+          motherY,
+          columnWidth - 2,
+          pdf
+        );
       }
 
       yPosition = Math.max(fatherY, motherY) + 10;
