@@ -48,6 +48,7 @@ import {
 } from "../ui/dropdown-menu";
 import { exportPedigreeToPDF } from "./pdfExport";
 import { getImageUrl } from "../share/imageUrl";
+import RichTextDisplay from "../pigeon/RichTextDisplay";
 
 const PigeonNode = ({ data }) => {
   const countryCode = data.country ? getCode(data.country) : null;
@@ -61,6 +62,9 @@ const PigeonNode = ({ data }) => {
   //   if (gender === "Unspecified") return "⛔";
   //   return "⛔";
   // };
+  console.log(data);
+  console.log(data.achievements);
+  console.log(data.description);
 
   const getGenderIcon = (gender) => {
     switch (gender) {
@@ -333,7 +337,7 @@ const PigeonNode = ({ data }) => {
         {data.description && (
           <div className="">
             <h2 className="text-black italic">
-              {data?.description?.slice(0, 450)}
+              <RichTextDisplay html={data?.description} fallback="N/A" />
             </h2>
           </div>
         )}
@@ -344,7 +348,7 @@ const PigeonNode = ({ data }) => {
               className="text-black whitespace-pre-line break-words max-w-[250px] overflow-hidden"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
-              {data.achievements}
+              <RichTextDisplay html={data.achievements} fallback="N/A" />
             </h2>
           </div>
         )}

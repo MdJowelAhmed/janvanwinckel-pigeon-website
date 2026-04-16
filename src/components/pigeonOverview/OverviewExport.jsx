@@ -58,7 +58,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
   
     const lineHeight = Number(options.lineHeight ?? 2.5);
     // Distance between marker and text (mm)
-    const listIndent = Number(options.listIndent ?? 1.7);
+    const listIndent = Number(options.listIndent ?? 2.3);
     const blockSpacing = Number(options.blockSpacing ?? Math.max(1, lineHeight * 0.8));
     // Extra gap between bullet items (li -> next li)
     const itemSpacing = Number(options.itemSpacing ?? Math.max(0.3, lineHeight * 0.25));
@@ -140,15 +140,47 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         // LIST ITEM
         if (tag === "li") {
           const symbolX = startX + indent;
-  
-          // symbol draw
-          drawListMarker(listType, symbolX, y);
-  
-          // child text draw (with spacing)
-          node.childNodes.forEach((child) =>
-            renderNode(child, indent + listIndent, listType)
-          );
-  
+        
+          let isMarkerDrawn = false;
+        
+          const originalY = y;
+        
+          const renderChildWithMarker = (child) => {
+            // যদি p থাকে → first line এ marker বসাবো
+            if (child.tagName && child.tagName.toLowerCase() === "p") {
+              const text = child.textContent.replace(/\s+/g, " ").trim();
+        
+              if (text) {
+                const lines = pdf.splitTextToSize(
+                  text,
+                  maxWidth - indent - listIndent
+                );
+        
+                lines.forEach((line, index) => {
+                  // marker only first line
+                  if (!isMarkerDrawn) {
+                    drawListMarker(listType, symbolX, y);
+                    isMarkerDrawn = true;
+                  }
+        
+                  pdf.text(line, startX + indent + listIndent, y);
+                  y += lineHeight;
+                });
+              }
+        
+              y += blockSpacing * 0.5;
+            } else {
+              renderNode(child, indent + listIndent, listType);
+            }
+          };
+        
+          node.childNodes.forEach((child) => renderChildWithMarker(child));
+        
+          // যদি li empty হয়
+          if (!isMarkerDrawn) {
+            drawListMarker(listType, symbolX, originalY);
+          }
+        
           y += itemSpacing;
         }
   
@@ -548,7 +580,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.shortInfo) {
         yPosition += 5;
         checkPageBreak(10);
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("helvetica", );
         pdf.text("Your Story:", margin, yPosition);
         yPosition += 6;
 
@@ -574,7 +606,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.notes) {
         yPosition += 5;
         checkPageBreak(10);
-        pdf.setFont("helvetica", "bold");
+        pdf.setFont("helvetica", );
         pdf.text("Notes:", margin, yPosition);
         yPosition += 6;
 

@@ -2,6 +2,7 @@ import { baseUrlApi } from "@/redux/baseUrl/baseUrlApi";
 import jsPDF from "jspdf";
 import { useCallback } from "react";
 import { getCode } from "country-list";
+import { renderRichTextToPdf } from "@/lib/richTextPdf";
 
 // Helper function to load image as base64 with compression and transparent background
 const loadImageAsBase64 = async (url, isCircular = false) => {
@@ -412,70 +413,127 @@ export const exportPedigreeToPDF = async (
         currentY += 0;
       }
 
-     // Calculate available space for description and achievements
-const availableSpace = y + height - currentY - 3;
-const hasDescription =
-  data.description && data.description.trim().length > 0;
-const hasAchievements =
-  data.achievements && data.achievements.trim().length > 0;
+      // Calculate available space for description and achievements
+      const availableSpace = y + height - currentY - 3;
 
-// === DESCRIPTION ===
-if (hasDescription && availableSpace > 10) {
-  pdf.setFontSize(7);
-  pdf.setFont("helvetica", "italic");
-  pdf.setTextColor(0, 0, 0);
+      // Normalize description to a plain string
+      const descriptionText =
+        typeof data?.description === "string"
+          ? data.description
+          : data?.description == null
+          ? ""
+          : String(data.description);
+      const hasDescription =
+        descriptionText && descriptionText.trim().length > 0;
 
-  // If no achievements, use more space for description
-  const descriptionSpace = hasAchievements
-    ? availableSpace * 0.5
-    : availableSpace - 5;
-  const maxDescLines = Math.floor(descriptionSpace / 3);
+      // Normalize achievements: support string OR array (e.g. HTML snippets)
+      let achievementsText = "";
+      if (Array.isArray(data?.achievements)) {
+        achievementsText = data.achievements
+          .map((item) =>
+            item == null
+              ? ""
+              : // keep tags/newlines if present; we'll just flatten whitespace
+                String(item)
+          )
+          .join("\n");
+      } else if (data?.achievements != null) {
+        achievementsText = String(data.achievements);
+      }
+      const hasAchievements =
+        achievementsText && achievementsText.trim().length > 0;
 
-  if (maxDescLines > 0) {
-    // Replace multiple consecutive spaces with single space, but keep newlines
-    const normalizedDescription = String(data.description)
-      .replace(/[ \t]+/g, ' ')  // Replace multiple spaces/tabs with single space
-      .trim();
-    
-    currentY = addWrappedText(
-      normalizedDescription,
-      leftMargin,
-      currentY,
-      contentWidth,
-      3,
-      maxDescLines
-    );
-    currentY += 0;
-  }
-}
+      // === DESCRIPTION (rich HTML or plain text) ===
+      if (hasDescription && availableSpace > 10) {
+        pdf.setFontSize(7);
+        pdf.setFont("helvetica", "italic");
+        pdf.setTextColor(0, 0, 0);
 
-// === ACHIEVEMENTS ===
-if (hasAchievements) {
-  const remainingSpace = y + height - currentY - 2;
+        const descriptionSpace = hasAchievements
+          ? availableSpace * 0.5
+          : availableSpace - 5;
 
-  if (remainingSpace > 5) {
-    pdf.setFontSize(7);
-    pdf.setFont("helvetica", "normal");
-    pdf.setTextColor(0, 0, 0);
+        // HTML থাকলে rich renderer ব্যবহার করব
+        if (/<[a-z][\s\S]*>/i.test(descriptionText)) {
+          const maxHeight = descriptionSpace;
+          const startY = currentY;
 
-    const maxAchvLines = Math.floor(remainingSpace / 2.5);
-    if (maxAchvLines > 0) {
-      // Replace multiple consecutive spaces with single space, but keep newlines
-      const normalizedAchievements = String(data.achievements)
-        .replace(/[ \t]+/g, ' ')  // Replace multiple spaces/tabs with single space
-        .trim();
-      
-      currentY = addWrappedText(
-        normalizedAchievements,
-        leftMargin,
-        currentY,
-        contentWidth,
-        2.5,
-        maxAchvLines
-      );
-    }
-  }
-}
+          currentY = renderRichTextToPdf({
+            pdf,
+            html: descriptionText,
+            x: leftMargin,
+            y: currentY,
+            maxWidth: contentWidth,
+            lineHeight: 2.5,
+          });
+
+          // Hard cap: description নিজের allotted height এর বেশি গেলে cut off
+          if (currentY - startY > maxHeight) {
+            currentY = startY + maxHeight;
+          }
+        } else {
+          const maxDescLines = Math.floor(descriptionSpace / 3);
+          if (maxDescLines > 0) {
+            const normalizedDescription = descriptionText
+              .replace(/[ \t]+/g, " ")
+              .trim();
+
+            currentY = addWrappedText(
+              normalizedDescription,
+              leftMargin,
+              currentY,
+              contentWidth,
+              3,
+              maxDescLines
+            );
+          }
+        }
+      }
+
+      // === ACHIEVEMENTS (rich HTML or plain text) ===
+      if (hasAchievements) {
+        const remainingSpace = y + height - currentY - 2;
+
+        if (remainingSpace > 5) {
+          pdf.setFontSize(7);
+          pdf.setFont("helvetica", "normal");
+          pdf.setTextColor(0, 0, 0);
+
+          if (/<[a-z][\s\S]*>/i.test(achievementsText)) {
+            const maxHeight = remainingSpace;
+            const startY = currentY;
+
+            currentY = renderRichTextToPdf({
+              pdf,
+              html: achievementsText,
+              x: leftMargin,
+              y: currentY,
+              maxWidth: contentWidth,
+              lineHeight: 2.2,
+            });
+
+            if (currentY - startY > maxHeight) {
+              currentY = startY + maxHeight;
+            }
+          } else {
+            const maxAchvLines = Math.floor(remainingSpace / 2.5);
+            if (maxAchvLines > 0) {
+              const normalizedAchievements = achievementsText
+                .replace(/[ \t]+/g, " ")
+                .trim();
+
+              currentY = addWrappedText(
+                normalizedAchievements,
+                leftMargin,
+                currentY,
+                contentWidth,
+                2.5,
+                maxAchvLines
+              );
+            }
+          }
+        }
+      }
 }
 
     // === LOGO ===

@@ -406,25 +406,14 @@ const PigeonOverviewContainer = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-1">
-                  <p className="font-normal text-[14px]">Results: </p>
-                  <p className="font-semibold text-[14px]">
-                    {/* {safeValue(pigeonData.fatherRingId?.results)} */}
-                    <span className="font-normal text-[14px]">
-                      {Array.isArray(pigeon?.fatherRingId?.addresults) &&
-                      pigeon?.fatherRingId?.addresults.length > 0
-                        ? pigeon?.fatherRingId?.addresults.map(
-                            (result, index) => (
-                              <RichTextDisplay
-                                key={index}
-                                html={result}
-                                className="mb-1"
-                              />
-                            )
-                          )
-                        : "N/A"}
-                    </span>
-                  </p>
+                <div className="text-sm text-gray-600">
+                  <span>Results: </span>
+                  <div className="text-accent-foreground font-semibold mt-0.5">
+                    <RichTextDisplay
+                      html={pigeon?.fatherRingId?.addresults}
+                      fallback="N/A"
+                    />
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -473,7 +462,7 @@ const PigeonOverviewContainer = () => {
 
                 <div className="text-sm text-gray-600">
                   <span>Story: </span>
-                  <div className="text-accent-foreground font-semibold mt-0.5">
+                  <div className="text-accent-foreground  mt-0.5">
                     <RichTextDisplay
                       html={pigeon?.motherRingId?.shortInfo}
                       fallback="N/A"
@@ -481,27 +470,16 @@ const PigeonOverviewContainer = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-1">
-                  <p className="font-normal text-[14px]">Results: </p>
-                  <p className="font-semibold text-[14px]">
-                    {/* {safeValue(pigeonData.fatherRingId?.results)} */}
-                    <span className="font-normal text-[14px]">
-                      {Array.isArray(pigeon?.motherRingId?.addresults) &&
-                      pigeon?.motherRingId?.addresults.length > 0
-                        ? pigeon?.motherRingId?.addresults.map(
-                            (result, index) => (
-                              <RichTextDisplay
-                                key={index}
-                                html={result}
-                                className="mb-1"
-                              />
-                            )
-                          )
-                        : "N/A"}
-                    </span>
-                  </p>
+                <div className="text-sm text-gray-600">
+                  <span>Results: </span>
+                  <div className="text-accent-foreground  mt-0.5">
+                    <RichTextDisplay
+                      html={pigeon?.motherRingId?.addresults}
+                      fallback="N/A"
+                    />
+                  </div>
                 </div>
-              </div>
+                </div>
             </CardContent>
           </Card>
         </div>
