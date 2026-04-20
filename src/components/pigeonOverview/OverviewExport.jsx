@@ -3,7 +3,8 @@ import jsPDF from "jspdf";
 import moment from "moment";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import { addresultsArrayToHtml, stripHtmlToText } from "@/lib/richTextUtils";
+import { addresultsArrayToHtml } from "@/lib/richTextUtils";
+import { renderRichTextToPdf } from "@/lib/richTextPdf";
 
 const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
   // Get image URL helper function
@@ -51,167 +52,17 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
     pdf,
     options = {}
   ) => {
-    const tempDiv = document.createElement("div");
-    tempDiv.innerHTML = html;
-  
-    let y = startY;
-  
-    const lineHeight = Number(options.lineHeight ?? 2.5);
-    // Distance between marker and text (mm)
-    const listIndent = Number(options.listIndent ?? 2.3);
-    const blockSpacing = Number(options.blockSpacing ?? Math.max(1, lineHeight * 0.8));
-    // Extra gap between bullet items (li -> next li)
-    const itemSpacing = Number(options.itemSpacing ?? Math.max(0.3, lineHeight * 0.25));
-  
-    const drawListMarker = (type, x, yPos) => {
-      if (type === "arrow") {
-        // Scale marker geometry with lineHeight so it stays vertically centered
-        // even when lineHeight is reduced (e.g. 2.5).
-        const centerY = yPos - lineHeight * 0.32;
-        const arrowStartX = x;
-        const arrowEndX = x + Math.max(2.0, lineHeight * 0.56);
-        const headDX = Math.max(0.6, lineHeight * 0.22);
-        const headDY = Math.max(0.45, lineHeight * 0.18);
-        pdf.setDrawColor(0, 0, 0);
-        pdf.setLineWidth(0.35);
-        pdf.line(arrowStartX, centerY, arrowEndX, centerY);
-        pdf.line(arrowEndX - headDX, centerY - headDY, arrowEndX, centerY);
-        pdf.line(arrowEndX - headDX, centerY + headDY, arrowEndX, centerY);
-        return;
-      }
-
-      if (type === "stripe") {
-        pdf.setDrawColor(0, 0, 0);
-        pdf.setLineWidth(0.35);
-        pdf.line(x, yPos - lineHeight * 0.64, x, yPos - lineHeight * 0.08);
-        return;
-      }
-
-      pdf.text("•", x, yPos);
-    };
-  
-    const renderNode = (node, indent = 0, listType = "disc") => {
-      // TEXT NODE
-      if (node.nodeType === 3) {
-        const text = node.textContent.replace(/\s+/g, " ").trim();
-  
-        if (text) {
-          const lines = pdf.splitTextToSize(
-            text,
-            maxWidth - indent - listIndent
-          );
-  
-          lines.forEach((line) => {
-            pdf.text(line, startX + indent + listIndent, y);
-            y += lineHeight;
-          });
-        }
-      }
-  
-      // ELEMENT NODE
-      if (node.nodeType === 1) {
-        const tag = node.tagName.toLowerCase();
-  
-        // PARAGRAPH
-        if (tag === "p") {
-          node.childNodes.forEach((child) =>
-            renderNode(child, indent, listType)
-          );
-          y += blockSpacing;
-        }
-  
-        // UNORDERED LIST
-        if (tag === "ul") {
-          let type = "disc";
-  
-          if (node.classList.contains("rich-ul-arrow")) {
-            type = "arrow";
-          } else if (node.classList.contains("rich-ul-stripe")) {
-            type = "stripe";
-          }
-  
-          node.childNodes.forEach((child) =>
-            renderNode(child, indent + listIndent, type)
-          );
-  
-          y += blockSpacing;
-        }
-  
-        // LIST ITEM
-        if (tag === "li") {
-          const symbolX = startX + indent;
-        
-          let isMarkerDrawn = false;
-        
-          const originalY = y;
-        
-          const renderChildWithMarker = (child) => {
-            // যদি p থাকে → first line এ marker বসাবো
-            if (child.tagName && child.tagName.toLowerCase() === "p") {
-              const text = child.textContent.replace(/\s+/g, " ").trim();
-        
-              if (text) {
-                const lines = pdf.splitTextToSize(
-                  text,
-                  maxWidth - indent - listIndent
-                );
-        
-                lines.forEach((line, index) => {
-                  // marker only first line
-                  if (!isMarkerDrawn) {
-                    drawListMarker(listType, symbolX, y);
-                    isMarkerDrawn = true;
-                  }
-        
-                  pdf.text(line, startX + indent + listIndent, y);
-                  y += lineHeight;
-                });
-              }
-        
-              y += blockSpacing * 0.5;
-            } else {
-              renderNode(child, indent + listIndent, listType);
-            }
-          };
-        
-          node.childNodes.forEach((child) => renderChildWithMarker(child));
-        
-          // যদি li empty হয়
-          if (!isMarkerDrawn) {
-            drawListMarker(listType, symbolX, originalY);
-          }
-        
-          y += itemSpacing;
-        }
-  
-        // BOLD
-        if (tag === "strong") {
-          pdf.setFont("helvetica", "bold");
-          node.childNodes.forEach((child) =>
-            renderNode(child, indent, listType)
-          );
-          pdf.setFont("helvetica", "normal");
-        }
-  
-        // ITALIC
-        if (tag === "em") {
-          pdf.setFont("helvetica", "italic");
-          node.childNodes.forEach((child) =>
-            renderNode(child, indent, listType)
-          );
-          pdf.setFont("helvetica", "normal");
-        }
-  
-        // LINE BREAK
-        if (tag === "br") {
-          y += lineHeight;
-        }
-      }
-    };
-  
-    tempDiv.childNodes.forEach((node) => renderNode(node));
-  
-    return y;
+    return renderRichTextToPdf({
+      pdf,
+      html,
+      x: startX,
+      y: startY,
+      maxWidth,
+      lineHeight: options.lineHeight ?? 2.5,
+      listIndent: options.listIndent ?? 2.3,
+      blockSpacing: options.blockSpacing,
+      itemSpacing: options.itemSpacing,
+    });
   };
 
   const handleExportPDF = async () => {
@@ -580,10 +431,11 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.shortInfo) {
         yPosition += 5;
         checkPageBreak(10);
-        pdf.setFont("helvetica", );
+        pdf.setFont("helvetica", "bold");
         pdf.text("Your Story:", margin, yPosition);
         yPosition += 6;
 
+        pdf.setFont("helvetica", "normal");
         yPosition = renderHtmlContent(
           pigeon.shortInfo,
           margin,
@@ -606,21 +458,31 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.notes) {
         yPosition += 5;
         checkPageBreak(10);
-        pdf.setFont("helvetica", );
+        pdf.setFont("helvetica", "bold");
         pdf.text("Notes:", margin, yPosition);
         yPosition += 6;
 
-        const notesLines = pdf.splitTextToSize(
-          pigeon.notes,
-          pageWidth - 2 * margin
-        );
-
         pdf.setFont("helvetica", "normal");
-        notesLines.forEach((line) => {
-          checkPageBreak(5);
-          pdf.text(line, margin, yPosition);
-          yPosition += 5;
-        });
+        const notes = String(pigeon.notes ?? "").trim();
+        if (/<[a-z][\s\S]*>/i.test(notes)) {
+          yPosition = renderHtmlContent(
+            notes,
+            margin,
+            yPosition,
+            pageWidth - 2 * margin,
+            pdf
+          );
+        } else {
+          const notesLines = pdf.splitTextToSize(
+            notes,
+            pageWidth - 2 * margin
+          );
+          notesLines.forEach((line) => {
+            checkPageBreak(5);
+            pdf.text(line, margin, yPosition);
+            yPosition += 5;
+          });
+        }
 
         yPosition += 5;
       }
