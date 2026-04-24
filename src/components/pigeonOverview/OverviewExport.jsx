@@ -253,11 +253,11 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.fatherRingId?.shortInfo) {
         fatherY += 3;
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(8);
+        pdf.setFontSize(9);
         pdf.text("Story:", leftParentX, fatherY);
         fatherY += 5;
         pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(7);
+        pdf.setFontSize(9);
         fatherY = renderHtmlContent(
           pigeon.fatherRingId.shortInfo,
           leftParentX,
@@ -276,12 +276,12 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       ) {
         fatherY += 3;
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(8);
+        pdf.setFontSize(9);
         pdf.text("Results:", leftParentX, fatherY);
         fatherY += 5;
 
         pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(7);
+        pdf.setFontSize(9);
         fatherY = renderHtmlContent(
           addresultsArrayToHtml(pigeon.fatherRingId.addresults),
           leftParentX,
@@ -347,11 +347,11 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.motherRingId?.shortInfo) {
         motherY += 3;
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(8);
+        pdf.setFontSize(9);
         pdf.text("Story:", rightParentX, motherY);
         motherY += 5;
         pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(7);
+        pdf.setFontSize(9);
         motherY = renderHtmlContent(
           pigeon.motherRingId.shortInfo,
           rightParentX,
@@ -362,7 +362,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         motherY += 3;
       }
 
-      // Mother Results (শুধু থাকলে দেখাবে)
+
       if (
         pigeon?.motherRingId?.addresults &&
         Array.isArray(pigeon.motherRingId.addresults) &&
@@ -370,12 +370,12 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       ) {
         motherY += 3;
         pdf.setFont("helvetica", "bold");
-        pdf.setFontSize(8);
+        pdf.setFontSize(9);
         pdf.text("Results:", rightParentX, motherY);
         motherY += 5;
 
         pdf.setFont("helvetica", "normal");
-        pdf.setFontSize(7);
+        pdf.setFontSize(9);
         motherY = renderHtmlContent(
           addresultsArrayToHtml(pigeon.motherRingId.addresults),
           rightParentX,
@@ -431,6 +431,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.shortInfo) {
         yPosition += 5;
         checkPageBreak(10);
+pdf.setFontSize(9);
         pdf.setFont("helvetica", "bold");
         pdf.text("Your Story:", margin, yPosition);
         yPosition += 6;
@@ -458,6 +459,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
       if (pigeon?.notes) {
         yPosition += 5;
         checkPageBreak(10);
+        pdf.setFontSize(9);
         pdf.setFont("helvetica", "bold");
         pdf.text("Notes:", margin, yPosition);
         yPosition += 6;
@@ -509,7 +511,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
         // Table Header
         pdf.setFillColor(45, 45, 45);
         pdf.rect(margin, yPosition - 5, pageWidth - 2 * margin, 8, "F");
-        pdf.setFontSize(7);
+        pdf.setFontSize(8);
         pdf.setFont("helvetica", "bold");
         pdf.setTextColor(255, 255, 255);
 
@@ -554,7 +556,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
           pdf.setLineWidth(0.1);
           pdf.line(margin, rowY + 4, pageWidth - margin, rowY + 4);
 
-          pdf.setFontSize(7);
+          pdf.setFontSize(8);
           pdf.setTextColor(0, 0, 0);
 
           const truncate = (text, width) => {
@@ -624,7 +626,7 @@ const PigeonPdfExport = ({ pigeon, siblings = [] }) => {
           pdf.setFont("helvetica", "bold");
           // pdf.text(`${index + 1}.`, margin, yPosition);
           pdf.setFont("helvetica", "normal");
-          
+          pdf.setFontSize(9);
           yPosition += 3;
 
           yPosition = renderHtmlContent(
