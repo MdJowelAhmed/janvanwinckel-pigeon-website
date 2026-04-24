@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ReactFlow,
   useNodesState,
@@ -365,9 +365,19 @@ export default function PigeonPedigreeChart() {
   const { id } = useParams();
   const { data: profileData } = useMyProfileQuery();
   const role = profileData?.role;
-  const { data: pedigreeData, isLoading } =
-    useGetPigeonPedigreeChartDataQuery(id);
+  const [selectedPigeonId, setSelectedPigeonId] = useState(id);
+  const {
+    data: pedigreeData,
+    isLoading,
+    isFetching: isSwitching,
+  } = useGetPigeonPedigreeChartDataQuery(selectedPigeonId, {
+    skip: !selectedPigeonId,
+  });
   const chartRef = useRef(null);
+
+  useEffect(() => {
+    if (id) setSelectedPigeonId(id);
+  }, [id]);
 
   const { nodes: dynamicNodes, edges: dynamicEdges } = useMemo(() => {
     return convertBackendToExistingFormat(pedigreeData, role);
@@ -581,8 +591,13 @@ export default function PigeonPedigreeChart() {
       </div>
       <div
         ref={chartRef}
-        className="w-full h-[1200px] xl:h-[1400px] 2xl:h-[1600px] bg-transparent flex justify-start items-center mt-0 rounded-3xl"
+        className="relative w-full h-[1200px] xl:h-[1400px] 2xl:h-[1600px] bg-transparent flex justify-start items-center mt-0 rounded-3xl"
       >
+        {isSwitching && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50">
+            <Spinner />
+          </div>
+        )}
         {/* --- ReactFlow (now dynamic) --- */}
         <ReactFlow
           nodes={nodes}
@@ -590,6 +605,12 @@ export default function PigeonPedigreeChart() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeClick={(_, node) => {
+            const nextId = node?.data?.pigeonId;
+            if (!nextId || node?.data?.isEmpty) return;
+            if (String(nextId) === String(selectedPigeonId)) return;
+            setSelectedPigeonId(nextId);
+          }}
           nodeTypes={nodeTypes}
           defaultViewport={defaultViewport}
           fitView
