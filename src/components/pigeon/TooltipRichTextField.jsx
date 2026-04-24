@@ -12,6 +12,7 @@ import { Bold, ChevronDown, Italic, List } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import ListItem from "@tiptap/extension-list-item";
 import { useCallback, useEffect, useMemo, useRef, useLayoutEffect } from "react";
 import { sanitizeRichHtml } from "@/lib/richTextUtils";
 import { StyledBulletList } from "./StyledBulletList";
@@ -82,6 +83,8 @@ export default function TooltipRichTextField({
         horizontalRule: false,
       }),
       StyledBulletList,
+      // Required for proper multi-line list behavior (toggleBulletList, Enter, etc.)
+      ListItem,
       Placeholder.configure({
         emptyEditorClass: "is-editor-empty",
         // No hint text when the field already has content (e.g. edit mode with saved HTML).

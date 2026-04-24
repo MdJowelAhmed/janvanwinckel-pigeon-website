@@ -455,22 +455,15 @@ export const exportPedigreeToPDF = async (
 
         // HTML থাকলে rich renderer ব্যবহার করব
         if (/<[a-z][\s\S]*>/i.test(descriptionText)) {
-          const maxHeight = descriptionSpace;
-          const startY = currentY;
-
           currentY = renderRichTextToPdf({
             pdf,
             html: descriptionText,
             x: leftMargin,
             y: currentY,
             maxWidth: contentWidth,
-            lineHeight: 2.5,
+            lineHeight: 2,
+            maxHeight: descriptionSpace,
           });
-
-          // Hard cap: description নিজের allotted height এর বেশি গেলে cut off
-          if (currentY - startY > maxHeight) {
-            currentY = startY + maxHeight;
-          }
         } else {
           const maxDescLines = Math.floor(descriptionSpace / 3);
           if (maxDescLines > 0) {
@@ -500,9 +493,6 @@ export const exportPedigreeToPDF = async (
           pdf.setTextColor(0, 0, 0);
 
           if (/<[a-z][\s\S]*>/i.test(achievementsText)) {
-            const maxHeight = remainingSpace;
-            const startY = currentY;
-
             currentY = renderRichTextToPdf({
               pdf,
               html: achievementsText,
@@ -510,11 +500,8 @@ export const exportPedigreeToPDF = async (
               y: currentY,
               maxWidth: contentWidth,
               lineHeight: 2.2,
+              maxHeight: remainingSpace,
             });
-
-            if (currentY - startY > maxHeight) {
-              currentY = startY + maxHeight;
-            }
           } else {
             const maxAchvLines = Math.floor(remainingSpace / 2.5);
             if (maxAchvLines > 0) {

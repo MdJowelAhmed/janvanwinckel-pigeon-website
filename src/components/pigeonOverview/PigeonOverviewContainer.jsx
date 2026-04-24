@@ -398,7 +398,7 @@ const PigeonOverviewContainer = () => {
 
                  <div className="text-sm text-gray-600">
                   <span>Story: </span>
-                  <div className="text-accent-foreground font-semibold mt-0.5">
+                  <div className="text-accent-foreground  mt-0.5">
                     <RichTextDisplay
                       html={pigeon?.fatherRingId?.shortInfo}
                       fallback="N/A"
@@ -408,7 +408,7 @@ const PigeonOverviewContainer = () => {
 
                 <div className="text-sm text-gray-600">
                   <span>Results: </span>
-                  <div className="text-accent-foreground font-semibold mt-0.5">
+                  <div className="text-accent-foreground  mt-0.5">
                     <RichTextDisplay
                       html={pigeon?.fatherRingId?.addresults}
                       fallback="N/A"

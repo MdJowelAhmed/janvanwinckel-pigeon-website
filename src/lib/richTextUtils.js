@@ -37,6 +37,8 @@ export function addresultsArrayToHtml(arr) {
       const s = String(line).trim();
       if (!s) return "";
       if (/^<p[\s>]/i.test(s)) return s;
+      // Preserve lists exactly as they were authored in the editor.
+      if (/^<(ul|ol)[\s>]/i.test(s)) return s;
       if (/<[a-z][\s\S]*>/i.test(s)) return `<p>${s}</p>`;
       return `<p>${escapeHtml(s)}</p>`;
     })
@@ -47,6 +49,11 @@ export function htmlToAddresultsArray(html) {
   if (!html || !String(html).trim()) return [];
   const raw = String(html).trim();
   const sanitized = sanitizeRichHtml(raw);
+  // If the authored content includes a list, keep the full HTML as a single entry
+  // so bullets (and custom list classes) are preserved exactly.
+  if (/<(ul|ol)(\s|>)/i.test(sanitized)) {
+    return [sanitized];
+  }
   if (!sanitized.includes("<")) {
     return sanitized
       .split(/\r?\n/)

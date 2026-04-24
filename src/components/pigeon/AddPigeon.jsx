@@ -494,6 +494,8 @@ const AddPigeonContainer = ({ pigeonId }) => {
         motherRingId: pigeon.motherRingId?.ringNumber || "",
         verified: pigeon.verified || false,
         iconic: pigeon.iconic || false,
+        // Keep TipTap content as HTML; backend expects addresults as array,
+        // but the editor works best with HTML (lists, bold/italic, etc.).
         addresults: Array.isArray(pigeon.addresults)
           ? addresultsArrayToHtml(pigeon.addresults)
           : pigeon.addresults || "",
@@ -577,7 +579,8 @@ const AddPigeonContainer = ({ pigeonId }) => {
         motherRingId: motherSearchTerm || selectedMotherId || "",
         verified: Boolean(data.verified),
         iconic: Boolean(data.iconic),
-        addresults: sanitizeRichHtml(data.addresults || ""),
+        // Backend expects an array. TooltipRichTextField returns HTML, so convert it.
+        addresults: htmlToAddresultsArray(data.addresults),
         iconicScore: parseInt(data.iconicScore) || 0,
         remaining: isEditMode
           ? photos.filter((photo) => !photo.file).map((photo) => photo.url)
