@@ -47,6 +47,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { exportPedigreeToPDF } from "./pdfExport";
+import { exportPedigreeToJPG } from "./jpgExport";
 import { getImageUrl } from "../share/imageUrl";
 import RichTextDisplay from "../pigeon/RichTextDisplay";
 
@@ -492,14 +493,6 @@ export default function PigeonPedigreeChart() {
     }
   }, [nodes, edges, pedigreeData]);
 
-  const exportToJPG = useCallback(async () => {
-    try {
-      await exportPedigreeToJPG(nodes, edges, pedigreeData);
-    } catch (error) {
-      alert("Error exporting JPG. Please try again.");
-    }
-  }, [nodes, edges, pedigreeData]);
-
   const exportToPDFWithGenerations = useCallback(
     async (genCount) => {
       try {
@@ -515,6 +508,23 @@ export default function PigeonPedigreeChart() {
       }
     },
     [nodes, edges, pedigreeData]
+  );
+
+  const exportToJPGWithGenerations = useCallback(
+    async (genCount) => {
+      try {
+        await exportPedigreeToJPG(
+          nodes,
+          edges,
+          pedigreeData,
+          profileData,
+          genCount
+        );
+      } catch (error) {
+        alert("Error exporting the selected generations. Please try again.");
+      }
+    },
+    [nodes, edges, pedigreeData, profileData]
   );
 
   const defaultViewport = { x: 0, y: 0, zoom: 0.8 };
@@ -545,13 +555,30 @@ export default function PigeonPedigreeChart() {
             <DownloadCloud className="h-4 w-4" />
             Export as Excel
           </Button>
-          <Button
-            onClick={exportToJPG}
-            className="bg-primary text-white py-6 rounded-sm hover:text-white flex items-center gap-2"
-          >
-            <DownloadCloud className="h-4 w-4" />
-            Export as JPG
-          </Button>
+          {/* JPG Export Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button className="bg-primary text-white py-6 rounded-sm hover:text-white flex items-center gap-2">
+                <DownloadCloud className="h-4 w-4" />
+                Export as JPG
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => exportToJPGWithGenerations(4)}
+                className="cursor-pointer"
+              >
+                Export as JPG (4Gen)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => exportToJPGWithGenerations(5)}
+                className="cursor-pointer"
+              >
+                Export as JPG (5Gen)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {/* PDF Export Dropdown */}
           <DropdownMenu>

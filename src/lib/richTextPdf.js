@@ -68,13 +68,13 @@ export function renderRichTextToPdf({
       ? Number(itemSpacing)
       : Math.max(0.3, lh * 0.25);
 
-  const drawListMarker = (type, mx, my) => {
+  const drawListMarker = (type, mx, my, markerLh = lh) => {
     if (type === "arrow") {
-      const centerY = my - lh * 0.32;
+      const centerY = my - markerLh * 0.32;
       const arrowStartX = mx;
-      const arrowEndX = mx + Math.max(2.0, lh * 0.56);
-      const headDX = Math.max(0.6, lh * 0.22);
-      const headDY = Math.max(0.45, lh * 0.18);
+      const arrowEndX = mx + Math.max(2.0, markerLh * 0.56);
+      const headDX = Math.max(0.6, markerLh * 0.22);
+      const headDY = Math.max(0.45, markerLh * 0.18);
       pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.35);
       pdf.line(arrowStartX, centerY, arrowEndX, centerY);
@@ -86,7 +86,7 @@ export function renderRichTextToPdf({
     if (type === "stripe") {
       pdf.setDrawColor(0, 0, 0);
       pdf.setLineWidth(0.35);
-      pdf.line(mx, my - lh * 0.64, mx, my - lh * 0.08);
+      pdf.line(mx, my - markerLh * 0.64, mx, my - markerLh * 0.08);
       return;
     }
 
@@ -125,7 +125,12 @@ export function renderRichTextToPdf({
 
   // ── Render a flat array of inline segments, word-wrapping across the full
   //    availableWidth.  Honours bold/italic font changes mid-line.
-  const renderInlineSegments = (segments, offsetX, availableWidth) => {
+  const renderInlineSegments = (
+    segments,
+    offsetX,
+    availableWidth,
+    localLineHeight = lh
+  ) => {
     if (!segments.length || isClipped) return;
 
     // Build a list of word tokens: { word, bold, italic }
@@ -164,7 +169,7 @@ export function renderRichTextToPdf({
 
     const flushLine = () => {
       if (!lineTokens.length || isClipped) return;
-      if (maxY != null && y + lh > maxY + 0.001) {
+      if (maxY != null && y + localLineHeight > maxY + 0.001) {
         isClipped = true;
         return;
       }
@@ -185,7 +190,7 @@ export function renderRichTextToPdf({
         pdf.text(t.word, curX, y);
         curX += measureWord(t);
       });
-      y += lh;
+      y += localLineHeight;
       lineTokens = [];
       lineWidth  = 0;
       // Reset font to normal after each line
@@ -278,6 +283,9 @@ export function renderRichTextToPdf({
       if (tag === "li") {
         const symbolX = x + indent;
         let isMarkerDrawn = false;
+        // Wrapped lines inside a single bullet list item need a bit more breathing room,
+        // otherwise lines look cramped (especially at small font sizes inside cards).
+        const listItemLineHeight = lh * 1.22;
 
         const renderChildWithMarker = (child) => {
           if (child.nodeType === 1 && child.tagName.toLowerCase() === "p") {
@@ -294,10 +302,15 @@ export function renderRichTextToPdf({
               // We'll measure how many lines the content wraps to,
               // draw the marker before the first line, then render inline.
               if (!isMarkerDrawn) {
-                drawListMarker(listType, symbolX, y);
+                drawListMarker(listType, symbolX, y, listItemLineHeight);
                 isMarkerDrawn = true;
               }
-              renderInlineSegments(segments, x + indent + liIndent, availableWidth);
+              renderInlineSegments(
+                segments,
+                x + indent + liIndent,
+                availableWidth,
+                listItemLineHeight
+              );
             }
             y += blkSpacing * 0.5;
           } else {
@@ -310,12 +323,12 @@ export function renderRichTextToPdf({
           renderChildWithMarker(child);
         });
         if (!isMarkerDrawn) {
-          if (maxY != null && y + lh > maxY + 0.001) {
+          if (maxY != null && y + listItemLineHeight > maxY + 0.001) {
             isClipped = true;
             return;
           }
-          drawListMarker(listType, symbolX, y);
-          y += lh + itmSpacing;
+          drawListMarker(listType, symbolX, y, listItemLineHeight);
+          y += listItemLineHeight + itmSpacing;
         } else {
           if (maxY != null && y + itmSpacing > maxY + 0.001) {
             isClipped = true;
