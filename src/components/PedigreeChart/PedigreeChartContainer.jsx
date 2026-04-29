@@ -32,6 +32,7 @@ import {
 import { useGetPigeonPedigreeChartDataQuery } from "@/redux/featured/pigeon/pigeonApi";
 import { convertBackendToExistingFormat } from "./PigeonData";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 import Spinner from "@/app/(commonLayout)/Spinner";
 import { getCode } from "country-list";
 import { WinnerPedigree } from "../share/svg/howItWorkSvg";
@@ -51,21 +52,21 @@ import { exportPedigreeToJPG } from "./jpgExport";
 import { getImageUrl } from "../share/imageUrl";
 import RichTextDisplay from "../pigeon/RichTextDisplay";
 
-const PigeonNode = ({ data }) => {
+const PigeonNode = ({ data, activePedigreeId }) => {
   const countryCode = data.country ? getCode(data.country) : null;
 
   // Check if this is the subject node (generation 0)
   const isSubject = data.generation === 0;
 
-  // const getGenderIcon = (gender) => {
-  //   if (gender === "Cock") return "♂";
-  //   if (gender === "Hen") return "♀";
-  //   if (gender === "Unspecified") return "⛔";
-  //   return "⛔";
-  // };
-  console.log(data);
-  console.log(data.achievements);
-  console.log(data.description);
+  const pigeonIdStr =
+    data.pigeonId != null && data.pigeonId !== ""
+      ? String(data.pigeonId)
+      : "";
+
+  const canOpenPedigree =
+    !data.isEmpty &&
+    Boolean(pigeonIdStr) &&
+    pigeonIdStr !== String(activePedigreeId ?? "");
 
   const getGenderIcon = (gender) => {
     switch (gender) {
@@ -148,7 +149,8 @@ const PigeonNode = ({ data }) => {
       className={`${getCardSize(data?.generation)} 
         border-b-8 border-r-10 border-black
         text-white rounded-none transition-all duration-300 px-2 py-2
-        ${getGenerationColor(data?.generation)} border overflow-hidden`}
+        ${getGenerationColor(data?.generation)} border overflow-hidden
+        cursor-auto`}
     >
       {/* Conditional Handles based on generation */}
       {isSubject ? (
@@ -304,11 +306,21 @@ const PigeonNode = ({ data }) => {
         </div>
       </div>
 
-      <div className="overflow-hidden h-full flex flex-col">
-        <div className="flex items-center justify-start gap-2 space-y-2">
-          {data.name && (
-            <h3 className="font-bold text-black truncate">{data.name}</h3>
-          )}
+      <div className="relative z-[5] overflow-hidden h-full min-h-0 flex flex-col pointer-events-auto">
+        <div className="relative z-20 flex shrink-0 items-center justify-start gap-2 space-y-2 min-w-0">
+          {data.name &&
+            (canOpenPedigree ? (
+              <Link
+                href={`/pedigree-chart/${encodeURIComponent(pigeonIdStr)}`}
+                onClick={(e) => e.stopPropagation()}
+                onPointerDownCapture={(e) => e.stopPropagation()}
+                className="nodrag nopan max-w-full min-w-0 text-left text-base font-bold text-black no-underline underline-offset-2 decoration-2 hover:text-blue-600 hover:underline cursor-pointer break-words"
+              >
+                {data.name}
+              </Link>
+            ) : (
+              <h3 className="font-bold text-black truncate min-w-0">{data.name}</h3>
+            ))}
         </div>
         <div className="flex items-center justify-start gap-2">
           {data.owner && (
@@ -358,12 +370,9 @@ const PigeonNode = ({ data }) => {
   );
 };
 
-const nodeTypes = {
-  pigeonNode: PigeonNode,
-};
-
 export default function PigeonPedigreeChart() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const { data: profileData } = useMyProfileQuery();
   const role = profileData?.role;
   const [selectedPigeonId, setSelectedPigeonId] = useState(id);
@@ -382,10 +391,19 @@ export default function PigeonPedigreeChart() {
 
   const { nodes: dynamicNodes, edges: dynamicEdges } = useMemo(() => {
     return convertBackendToExistingFormat(pedigreeData, role);
-  }, [pedigreeData]);
+  }, [pedigreeData, role]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(dynamicNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(dynamicEdges);
+
+  const nodeTypes = useMemo(
+    () => ({
+      pigeonNode: (props) => (
+        <PigeonNode {...props} activePedigreeId={id} />
+      ),
+    }),
+    [id]
+  );
 
   useEffect(() => {
     setNodes(dynamicNodes);
@@ -632,12 +650,6 @@ export default function PigeonPedigreeChart() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
-          onNodeClick={(_, node) => {
-            const nextId = node?.data?.pigeonId;
-            if (!nextId || node?.data?.isEmpty) return;
-            if (String(nextId) === String(selectedPigeonId)) return;
-            setSelectedPigeonId(nextId);
-          }}
           nodeTypes={nodeTypes}
           defaultViewport={defaultViewport}
           fitView

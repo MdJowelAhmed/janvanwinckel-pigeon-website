@@ -1,7 +1,8 @@
 import React from "react";
 
 const AuthLayout = ({ children }) => {
-  const bgImage = "https://i.ibb.co.com/WpnfSfZb/Log-in.png";
+  const bgImage = "/assests/log-in.webp";
+  // const bgImage = "https://i.ibb.co.com/WpnfSfZb/Log-in.png";
 
   return (
     <div className="w-full min-h-screen relative">

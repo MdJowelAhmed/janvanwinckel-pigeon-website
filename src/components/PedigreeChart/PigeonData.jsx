@@ -13,6 +13,19 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
   const nodes = [];
   const edges = [];
 
+  /** API sometimes returns populated pigeon, sometimes only an id string. */
+  const resolvePigeonId = (pigeonRef) => {
+    if (pigeonRef == null || pigeonRef === "") return null;
+    if (typeof pigeonRef === "string" || typeof pigeonRef === "number") {
+      return String(pigeonRef);
+    }
+    if (typeof pigeonRef === "object") {
+      const raw = pigeonRef._id ?? pigeonRef.id ?? pigeonRef.$oid;
+      return raw != null && raw !== "" ? String(raw) : null;
+    }
+    return null;
+  };
+
   // Determine max generation based on role
   const maxGeneration = role === "PAIDUSER" || role === "SUPER_ADMIN" ? 4 : 3;
 
@@ -92,7 +105,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
     type: "pigeonNode",
     position: { x: 0, y: 500 },
     data: {
-      pigeonId: subject?._id || subject?.id || null,
+      pigeonId: resolvePigeonId(subject),
       name: subject.name,
       ringNumber: subject.ringNumber,
       owner: getBreederInfo(subject.breeder),
@@ -123,8 +136,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
       type: "pigeonNode",
       position: { x: 180, y: -200 }, // Changed from { x: 320, y: -200 }
       data: {
-        pigeonId:
-          subject?.fatherRingId?._id || subject?.fatherRingId?.id || null,
+        pigeonId: resolvePigeonId(subject.fatherRingId),
         name: subject.fatherRingId.name,
         ringNumber: subject.fatherRingId.ringNumber,
         owner: getBreederInfo(subject.fatherRingId.breeder),
@@ -168,8 +180,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
       type: "pigeonNode",
       position: { x: 180, y: 1200 }, // Changed from { x: 320, y: 1210 }
       data: {
-        pigeonId:
-          subject?.motherRingId?._id || subject?.motherRingId?.id || null,
+        pigeonId: resolvePigeonId(subject.motherRingId),
         name: subject.motherRingId.name,
         ringNumber: subject.motherRingId.ringNumber,
         owner: getBreederInfo(subject.motherRingId.breeder),
@@ -219,10 +230,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
       type: "pigeonNode",
       position: { x: 500, y: -200 }, // Shifted right from father_1
       data: {
-        pigeonId:
-          subject?.fatherRingId?.fatherRingId?._id ||
-          subject?.fatherRingId?.fatherRingId?.id ||
-          null,
+        pigeonId: resolvePigeonId(subject.fatherRingId?.fatherRingId),
         name: subject.fatherRingId.fatherRingId.name,
         ringNumber: subject.fatherRingId.fatherRingId.ringNumber,
         owner: getBreederInfo(subject.fatherRingId.fatherRingId.breeder),
@@ -266,10 +274,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
       type: "pigeonNode",
       position: { x: 500, y: 320 },
       data: {
-        pigeonId:
-          subject?.fatherRingId?.motherRingId?._id ||
-          subject?.fatherRingId?.motherRingId?.id ||
-          null,
+        pigeonId: resolvePigeonId(subject.fatherRingId?.motherRingId),
         name: subject.fatherRingId.motherRingId.name,
         ringNumber: subject.fatherRingId.motherRingId.ringNumber,
         owner: getBreederInfo(subject.fatherRingId.motherRingId.breeder),
@@ -312,10 +317,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
       type: "pigeonNode",
       position: { x: 500, y: 850 },
       data: {
-        pigeonId:
-          subject?.motherRingId?.fatherRingId?._id ||
-          subject?.motherRingId?.fatherRingId?.id ||
-          null,
+        pigeonId: resolvePigeonId(subject.motherRingId?.fatherRingId),
         name: subject.motherRingId.fatherRingId.name,
         ringNumber: subject.motherRingId.fatherRingId.ringNumber,
         owner: getBreederInfo(subject.motherRingId.fatherRingId.breeder),
@@ -358,10 +360,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
       type: "pigeonNode",
       position: { x: 500, y: 1373 },
       data: {
-        pigeonId:
-          subject?.motherRingId?.motherRingId?._id ||
-          subject?.motherRingId?.motherRingId?.id ||
-          null,
+        pigeonId: resolvePigeonId(subject.motherRingId?.motherRingId),
         name: subject.motherRingId.motherRingId.name,
         ringNumber: subject.motherRingId.motherRingId.ringNumber,
         owner: getBreederInfo(subject.motherRingId.motherRingId.breeder),
@@ -416,7 +415,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
           type: "pigeonNode",
           position: position,
           data: {
-            pigeonId: parentPath?._id || parentPath?.id || null,
+            pigeonId: resolvePigeonId(parentPath),
             name: parentPath.name || defaultName,
             ringNumber: parentPath.ringNumber,
             owner: getBreederInfo(parentPath.breeder),
@@ -554,8 +553,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
           type: "pigeonNode",
           position: position.father,
           data: {
-            pigeonId:
-              parentPath?.fatherRingId?._id || parentPath?.fatherRingId?.id || null,
+            pigeonId: resolvePigeonId(parentPath.fatherRingId),
             name: parentPath.fatherRingId.name || `${defaultName} Father`,
             ringNumber: parentPath.fatherRingId.ringNumber,
             owner: getBreederInfo(parentPath.fatherRingId.breeder),
@@ -600,8 +598,7 @@ export const convertBackendToExistingFormat = (backendResponse, role) => {
           type: "pigeonNode",
           position: position.mother,
           data: {
-            pigeonId:
-              parentPath?.motherRingId?._id || parentPath?.motherRingId?.id || null,
+            pigeonId: resolvePigeonId(parentPath.motherRingId),
             name: parentPath.motherRingId.name || `${defaultName} Mother`,
             ringNumber: parentPath.motherRingId.ringNumber,
             owner: getBreederInfo(parentPath.motherRingId.breeder),
