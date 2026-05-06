@@ -133,8 +133,9 @@ export function renderRichTextToPdf({
   ) => {
     if (!segments.length || isClipped) return;
 
-    // Build a list of word tokens: { word, bold, italic }
-    // We split on spaces / newlines so we can re-flow them.
+    // Build a list of word tokens: { word, bold, italic }.
+    // We split on spaces/newlines so we can re-flow them, then normalize
+    // whitespace so list lines do not start with artificial indentation.
     const tokens = [];
     segments.forEach(({ text, bold, italic }) => {
       // Split on explicit newlines first
@@ -148,6 +149,29 @@ export function renderRichTextToPdf({
         });
         if (pi < parts.length - 1) tokens.push({ word: "\n", bold: false, italic: false });
       });
+    });
+
+    // Normalize tokens:
+    // - remove leading spaces at line/document start
+    // - remove repeated spaces caused by HTML indentation/newlines
+    const normalizedTokens = [];
+    let lineHasContent = false;
+    tokens.forEach((token) => {
+      if (token.word === "\n") {
+        normalizedTokens.push(token);
+        lineHasContent = false;
+        return;
+      }
+
+      if (token.word === " ") {
+        const prev = normalizedTokens[normalizedTokens.length - 1];
+        if (!lineHasContent || !prev || prev.word === " " || prev.word === "\n") {
+          return;
+        }
+      }
+
+      normalizedTokens.push(token);
+      if (token.word !== " ") lineHasContent = true;
     });
 
     // Helper: measure a word with the right font
@@ -197,7 +221,7 @@ export function renderRichTextToPdf({
       pdf.setFont("helvetica", "normal");
     };
 
-    tokens.forEach((token) => {
+    normalizedTokens.forEach((token) => {
       if (isClipped) return;
       if (token.word === "\n") {
         flushLine();
@@ -266,9 +290,19 @@ export function renderRichTextToPdf({
         if (node.classList.contains("rich-ul-arrow")) type = "arrow";
         else if (node.classList.contains("rich-ul-stripe")) type = "stripe";
 
-        node.childNodes.forEach((child) => {
+        // Render only direct <li> children.
+        // Rich editors may inject whitespace text nodes or stray blocks between
+        // list items; those should not create visible line breaks in exports.
+        const listItems = Array.from(node.childNodes).filter(
+          (child) =>
+            child.nodeType === 1 && child.tagName.toLowerCase() === "li"
+        );
+
+        listItems.forEach((child) => {
           if (isClipped) return;
-          renderNode(child, indent + liIndent, type);
+          // Do not push first-level list content too far to the right.
+          // `li` itself handles marker/text spacing.
+          renderNode(child, indent, type);
         });
         if (!isClipped) {
           if (maxY != null && y + blkSpacing > maxY + 0.001) {
@@ -283,11 +317,39 @@ export function renderRichTextToPdf({
       if (tag === "li") {
         const symbolX = x + indent;
         let isMarkerDrawn = false;
-        // Wrapped lines inside a single bullet list item need a bit more breathing room,
-        // otherwise lines look cramped (especially at small font sizes inside cards).
-        const listItemLineHeight = lh * 1.22;
+        // Keep arrow list spacing unchanged; make disc/stripe a bit tighter.
+        const isArrowList = listType === "arrow";
+        const isStripeList = listType === "stripe";
+        // Horizontal (X-axis) gap between marker and text.
+        // Keep it clearly visible without introducing large left padding.
+        const markerTextGap = isArrowList
+          ? Math.max(1.7, liIndent * 0.95)
+          : isStripeList
+          ? Math.max(1.15, liIndent * 0.52)
+          : Math.max(0.95, liIndent * 0.42);
+        const listItemLineHeight = isArrowList ? lh * 1.22 : lh * 1.22;
+        const hasRenderableContent = (child) => {
+          if (child.nodeType === 3) {
+            return Boolean(child.textContent?.replace(/\s+/g, " ").trim());
+          }
+          if (child.nodeType !== 1) return false;
+          const childTag = child.tagName.toLowerCase();
+          if (childTag === "br" || childTag === "ul" || childTag === "ol") {
+            return false;
+          }
+          return Boolean(child.textContent?.replace(/\s+/g, " ").trim());
+        };
 
         const renderChildWithMarker = (child) => {
+          if (!isMarkerDrawn && hasRenderableContent(child)) {
+            if (maxY != null && y + listItemLineHeight > maxY + 0.001) {
+              isClipped = true;
+              return;
+            }
+            drawListMarker(listType, symbolX, y, listItemLineHeight);
+            isMarkerDrawn = true;
+          }
+
           if (child.nodeType === 1 && child.tagName.toLowerCase() === "p") {
             // Collect inline segments from this <p> inside <li>
             const segments = [];
@@ -296,25 +358,19 @@ export function renderRichTextToPdf({
             });
             const text = segments.map((s) => s.text).join("").trim();
             if (text) {
-              const availableWidth = Math.max(10, maxWidth - indent - liIndent);
-
-              // We need to draw the marker on the FIRST line only.
-              // We'll measure how many lines the content wraps to,
-              // draw the marker before the first line, then render inline.
-              if (!isMarkerDrawn) {
-                drawListMarker(listType, symbolX, y, listItemLineHeight);
-                isMarkerDrawn = true;
-              }
+              const availableWidth = Math.max(
+                10,
+                maxWidth - indent - markerTextGap
+              );
               renderInlineSegments(
                 segments,
-                x + indent + liIndent,
+                x + indent + markerTextGap,
                 availableWidth,
                 listItemLineHeight
               );
             }
-            y += blkSpacing * 0.5;
           } else {
-            renderNode(child, indent + liIndent, listType);
+            renderNode(child, indent + markerTextGap, listType);
           }
         };
 
@@ -322,20 +378,12 @@ export function renderRichTextToPdf({
           if (isClipped) return;
           renderChildWithMarker(child);
         });
-        if (!isMarkerDrawn) {
-          if (maxY != null && y + listItemLineHeight > maxY + 0.001) {
-            isClipped = true;
-            return;
-          }
-          drawListMarker(listType, symbolX, y, listItemLineHeight);
-          y += listItemLineHeight + itmSpacing;
-        } else {
-          if (maxY != null && y + itmSpacing > maxY + 0.001) {
-            isClipped = true;
-            return;
-          }
-          y += itmSpacing;
+        if (!isMarkerDrawn) return;
+        if (maxY != null && y + itmSpacing > maxY + 0.001) {
+          isClipped = true;
+          return;
         }
+        y += itmSpacing;
         return;
       }
 
