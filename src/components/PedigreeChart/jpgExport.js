@@ -422,8 +422,9 @@ export const exportPedigreeToJPG = async (
       bordersToDraw.push({ x, y, width, height });
 
       let currentY = y + 4;
-      const leftMargin = x + 2;
-      const contentWidth = width - 4;
+      const horizontalPadding = 1.3;
+      const leftMargin = x + horizontalPadding;
+      const contentWidth = width - horizontalPadding * 2;
 
       // === HEADER ROW ===
       pdf.setFontSize(7);
