@@ -16,12 +16,6 @@ import { useCallback, useEffect, useMemo, useRef, useLayoutEffect } from "react"
 import { sanitizeRichHtml } from "@/lib/richTextUtils";
 import { StyledBulletList, StyledListItem } from "./StyledBulletList";
 
-const LIST_CLASSES = {
-  disc: "rich-ul-disc",
-  arrow: "rich-ul-arrow",
-  stripe: "rich-ul-stripe",
-};
-
 function FormatButton({ label, active, onMouseDown, children }) {
   return (
     <Tooltip.Root>
@@ -148,15 +142,17 @@ export default function TooltipRichTextField({
   const applyListStyle = useCallback(
     (styleKey) => {
       if (!editor) return;
-      const cls = LIST_CLASSES[styleKey] || LIST_CLASSES.disc;
-      const bulletStyle = styleKey in LIST_CLASSES ? styleKey : "disc";
+      const bulletStyle =
+        styleKey === "arrow" || styleKey === "stripe" || styleKey === "disc"
+          ? styleKey
+          : "disc";
 
       let chain = editor.chain().focus();
       if (!editor.isActive("bulletList")) chain = chain.toggleBulletList();
 
       chain
-        // Keep ul class for backwards compatible rendering (old saved HTML/CSS).
-        .updateAttributes("bulletList", { class: cls })
+        // Use a neutral class so parent UL doesn't override sibling list items.
+        .updateAttributes("bulletList", { class: "rich-ul-mixed" })
         // Apply style to the active list item only.
         .updateAttributes("listItem", { bulletStyle })
         .run();
