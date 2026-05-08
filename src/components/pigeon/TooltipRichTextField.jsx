@@ -12,10 +12,9 @@ import { Bold, ChevronDown, Italic, List } from "lucide-react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import ListItem from "@tiptap/extension-list-item";
 import { useCallback, useEffect, useMemo, useRef, useLayoutEffect } from "react";
 import { sanitizeRichHtml } from "@/lib/richTextUtils";
-import { StyledBulletList } from "./StyledBulletList";
+import { StyledBulletList, StyledListItem } from "./StyledBulletList";
 
 const LIST_CLASSES = {
   disc: "rich-ul-disc",
@@ -83,8 +82,8 @@ export default function TooltipRichTextField({
         horizontalRule: false,
       }),
       StyledBulletList,
-      // Required for proper multi-line list behavior (toggleBulletList, Enter, etc.)
-      ListItem,
+      // Required for proper multi-line list behavior with per-item bullet style.
+      StyledListItem,
       Placeholder.configure({
         emptyEditorClass: "is-editor-empty",
         // No hint text when the field already has content (e.g. edit mode with saved HTML).
@@ -150,11 +149,17 @@ export default function TooltipRichTextField({
     (styleKey) => {
       if (!editor) return;
       const cls = LIST_CLASSES[styleKey] || LIST_CLASSES.disc;
+      const bulletStyle = styleKey in LIST_CLASSES ? styleKey : "disc";
+
       let chain = editor.chain().focus();
-      if (!editor.isActive("bulletList")) {
-        chain = chain.toggleBulletList();
-      }
-      chain.updateAttributes("bulletList", { class: cls }).run();
+      if (!editor.isActive("bulletList")) chain = chain.toggleBulletList();
+
+      chain
+        // Keep ul class for backwards compatible rendering (old saved HTML/CSS).
+        .updateAttributes("bulletList", { class: cls })
+        // Apply style to the active list item only.
+        .updateAttributes("listItem", { bulletStyle })
+        .run();
     },
     [editor]
   );

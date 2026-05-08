@@ -349,3 +349,50 @@ h3 {
 .tiptap-editor.ProseMirror-focused p.is-empty::before {
   content: none !important;
 }
+
+/* Per-item bullet style support (mixed markers in the same list). */
+.tiptap-editor ul,
+.rich-text-display ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.tiptap-editor li[data-bullet-style],
+.rich-text-display li[data-bullet-style] {
+  position: relative;
+  margin-bottom: 0.1rem;
+}
+
+.tiptap-editor li[data-bullet-style="disc"],
+.rich-text-display li[data-bullet-style="disc"] {
+  padding-left: 0.72rem;
+}
+
+.tiptap-editor li[data-bullet-style="disc"]::before,
+.rich-text-display li[data-bullet-style="disc"]::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.tiptap-editor li[data-bullet-style="arrow"],
+.rich-text-display li[data-bullet-style="arrow"] {
+  padding-left: 1.6rem;
+}
+
+.tiptap-editor li[data-bullet-style="arrow"]::before,
+.rich-text-display li[data-bullet-style="arrow"]::before {
+  content: "→";
+  position: absolute;
+  left: 0;
+  color: #000;
+  font-weight: 600;
+}
+
+.tiptap-editor li[data-bullet-style="stripe"],
+.rich-text-display li[data-bullet-style="stripe"] {
+  border-left: 2px solid #000;
+  padding-left: 0.26rem;
+}

@@ -315,11 +315,16 @@ export function renderRichTextToPdf({
       }
 
       if (tag === "li") {
+        const itemStyleAttr = node.getAttribute("data-bullet-style");
+        const itemListType =
+          itemStyleAttr === "arrow" || itemStyleAttr === "stripe" || itemStyleAttr === "disc"
+            ? itemStyleAttr
+            : listType;
         const symbolX = x + indent;
         let isMarkerDrawn = false;
         // Keep arrow list spacing unchanged; make disc/stripe a bit tighter.
-        const isArrowList = listType === "arrow";
-        const isStripeList = listType === "stripe";
+        const isArrowList = itemListType === "arrow";
+        const isStripeList = itemListType === "stripe";
         // Horizontal (X-axis) gap between marker and text.
         // Keep it clearly visible without introducing large left padding.
         const markerTextGap = isArrowList
@@ -346,7 +351,7 @@ export function renderRichTextToPdf({
               isClipped = true;
               return;
             }
-            drawListMarker(listType, symbolX, y, listItemLineHeight);
+            drawListMarker(itemListType, symbolX, y, listItemLineHeight);
             isMarkerDrawn = true;
           }
 
@@ -370,7 +375,7 @@ export function renderRichTextToPdf({
               );
             }
           } else {
-            renderNode(child, indent + markerTextGap, listType);
+            renderNode(child, indent + markerTextGap, itemListType);
           }
         };
 
