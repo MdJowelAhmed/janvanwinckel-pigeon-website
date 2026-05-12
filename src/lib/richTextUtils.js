@@ -34,13 +34,14 @@ export function addresultsArrayToHtml(arr) {
   if (!arr || !Array.isArray(arr) || arr.length === 0) return "";
   return arr
     .map((line) => {
-      const s = String(line).trim();
-      if (!s) return "";
+      const s = String(line);
+      const trimmed = s.trim();
+      if (!trimmed) return "<p><br /></p>";
       if (/^<p[\s>]/i.test(s)) return s;
       // Preserve lists exactly as they were authored in the editor.
       if (/^<(ul|ol)[\s>]/i.test(s)) return s;
       if (/<[a-z][\s\S]*>/i.test(s)) return `<p>${s}</p>`;
-      return `<p>${escapeHtml(s)}</p>`;
+      return `<p>${escapeHtml(trimmed)}</p>`;
     })
     .join("");
 }
@@ -73,7 +74,7 @@ export function htmlToAddresultsArray(html) {
   const out = [];
   const pushParagraphHtml = (el) => {
     const inner = el.innerHTML.trim();
-    if (inner) out.push(inner);
+    out.push(inner || "<br />");
   };
 
   const walk = (parent) => {
@@ -88,7 +89,7 @@ export function htmlToAddresultsArray(html) {
         } else if (tag === "ul" || tag === "ol") {
           child.querySelectorAll(":scope > li").forEach((li) => {
             const inner = li.innerHTML.trim();
-            if (inner) out.push(inner);
+            out.push(inner || "<br />");
           });
         } else if (tag === "br") {
           /* ignore */

@@ -17,7 +17,11 @@ export function renderRichTextToPdf({
   if (!pdf || !html || maxWidth <= 0) return y;
 
   const raw =
-    html != null ? String(html).replace(/\\n/g, "\n").trim() : "";
+    html != null
+      ? String(html)
+          .replace(/\\n/g, "\n")
+          .replace(/<p>\s*<\/p>/gi, "<p><br /></p>")
+      : "";
   if (!raw) return y;
 
   const startY = y;
@@ -339,9 +343,8 @@ export function renderRichTextToPdf({
           }
           if (child.nodeType !== 1) return false;
           const childTag = child.tagName.toLowerCase();
-          if (childTag === "br" || childTag === "ul" || childTag === "ol") {
-            return false;
-          }
+          if (childTag === "br" || childTag === "p") return true;
+          if (childTag === "ul" || childTag === "ol") return false;
           return Boolean(child.textContent?.replace(/\s+/g, " ").trim());
         };
 
@@ -373,6 +376,10 @@ export function renderRichTextToPdf({
                 availableWidth,
                 listItemLineHeight
               );
+            } else if (maxY == null || y + listItemLineHeight <= maxY + 0.001) {
+              y += listItemLineHeight;
+            } else {
+              isClipped = true;
             }
           } else {
             renderNode(child, indent + markerTextGap, itemListType);
@@ -383,7 +390,15 @@ export function renderRichTextToPdf({
           if (isClipped) return;
           renderChildWithMarker(child);
         });
-        if (!isMarkerDrawn) return;
+        if (!isMarkerDrawn) {
+          if (maxY != null && y + listItemLineHeight > maxY + 0.001) {
+            isClipped = true;
+            return;
+          }
+          drawListMarker(itemListType, symbolX, y, listItemLineHeight);
+          isMarkerDrawn = true;
+          y += listItemLineHeight;
+        }
         if (maxY != null && y + itmSpacing > maxY + 0.001) {
           isClipped = true;
           return;

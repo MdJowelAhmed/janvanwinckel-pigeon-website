@@ -267,7 +267,7 @@ h3 {
 /* Arrow: more gap between → and text */
 .rich-ul-arrow > li {
   position: relative;
-  padding-left: 1.6rem;   /* was 1.15rem — increased for arrow */
+  padding-left: 1.1rem;   /* was 1.15rem — increased for arrow */
   margin-bottom: 0.15rem;
 }
 .rich-ul-arrow > li::before {
@@ -381,7 +381,7 @@ h3 {
 .tiptap-editor li[data-bullet-style="arrow"],
 .rich-text-display li[data-bullet-style="arrow"] {
   border-left: none;
-  padding-left: 1.6rem;
+  padding-left: 1.22rem;
 }
 
 .tiptap-editor li[data-bullet-style="arrow"]::before,
