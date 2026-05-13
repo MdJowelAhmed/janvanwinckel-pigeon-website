@@ -17,7 +17,11 @@ export function renderRichTextToPdf({
   if (!pdf || !html || maxWidth <= 0) return y;
 
   const raw =
-    html != null ? String(html).replace(/\\n/g, "\n").trim() : "";
+    html != null
+      ? String(html)
+          .replace(/\\n/g, "\n")
+          .replace(/<p>\s*<\/p>/gi, "<p><br /></p>")
+      : "";
   if (!raw) return y;
 
   const startY = y;
@@ -67,6 +71,17 @@ export function renderRichTextToPdf({
     itemSpacing !== undefined
       ? Number(itemSpacing)
       : Math.max(0.3, lh * 0.25);
+
+  /** Tighter vertical gap when a `<p>` is directly followed by a list (or list by `<p>`). */
+  const gapParagraphToList = Math.max(lh * 0.12, blkSpacing * 0.28);
+  /** After `</ul>`: avoid stacking full `blkSpacing` on top of last-item tail gap. */
+  const afterListBlockGap = Math.max(lh * 0.12, blkSpacing * 0.32);
+  const nextBlockIsList = (el) =>
+    el &&
+    el.nodeType === 1 &&
+    ["ul", "ol"].includes(el.tagName.toLowerCase());
+  const nextBlockIsParagraph = (el) =>
+    el && el.nodeType === 1 && el.tagName.toLowerCase() === "p";
 
   const drawListMarker = (type, mx, my, markerLh = lh) => {
     if (type === "arrow") {
@@ -246,8 +261,18 @@ export function renderRichTextToPdf({
     pdf.setFont("helvetica", "normal");
   };
 
+  const forEachChildWithNext = (parent, indent, listType, ctx, fn) => {
+    const kids = Array.from(parent.childNodes);
+    for (let i = 0; i < kids.length; i++) {
+      if (isClipped) break;
+      const child = kids[i];
+      const nextEl = kids.slice(i + 1).find((c) => c.nodeType === 1);
+      fn(child, { ...ctx, nextBlockSibling: nextEl ?? null });
+    }
+  };
+
   // ── Main recursive renderer ───────────────────────────────────────────────
-  const renderNode = (node, indent = 0, listType = "disc") => {
+  const renderNode = (node, indent = 0, listType = "disc", ctx = {}) => {
     if (isClipped) return;
     // TEXT NODE at block level (shouldn't normally happen, but handle gracefully)
     if (node.nodeType === 3) {
@@ -276,16 +301,19 @@ export function renderRichTextToPdf({
           renderInlineSegments(segments, x + indent, availableWidth);
         }
         if (!isClipped) {
-          if (maxY != null && y + blkSpacing > maxY + 0.001) {
+          const gapAfter = nextBlockIsList(ctx.nextBlockSibling)
+            ? gapParagraphToList
+            : blkSpacing;
+          if (maxY != null && y + gapAfter > maxY + 0.001) {
             isClipped = true;
             return;
           }
-          y += blkSpacing;
+          y += gapAfter;
         }
         return;
       }
 
-      if (tag === "ul") {
+      if (tag === "ul" || tag === "ol") {
         let type = "disc";
         if (node.classList.contains("rich-ul-arrow")) type = "arrow";
         else if (node.classList.contains("rich-ul-stripe")) type = "stripe";
@@ -298,28 +326,38 @@ export function renderRichTextToPdf({
             child.nodeType === 1 && child.tagName.toLowerCase() === "li"
         );
 
-        listItems.forEach((child) => {
+        listItems.forEach((child, idx) => {
           if (isClipped) return;
           // Do not push first-level list content too far to the right.
           // `li` itself handles marker/text spacing.
-          renderNode(child, indent, type);
+          renderNode(child, indent, type, {
+            isLastListItem: idx === listItems.length - 1,
+          });
         });
         if (!isClipped) {
-          if (maxY != null && y + blkSpacing > maxY + 0.001) {
+          const gapAfter = nextBlockIsParagraph(ctx.nextBlockSibling)
+            ? afterListBlockGap
+            : blkSpacing;
+          if (maxY != null && y + gapAfter > maxY + 0.001) {
             isClipped = true;
             return;
           }
-          y += blkSpacing;
+          y += gapAfter;
         }
         return;
       }
 
       if (tag === "li") {
+        const itemStyleAttr = node.getAttribute("data-bullet-style");
+        const itemListType =
+          itemStyleAttr === "arrow" || itemStyleAttr === "stripe" || itemStyleAttr === "disc"
+            ? itemStyleAttr
+            : listType;
         const symbolX = x + indent;
         let isMarkerDrawn = false;
         // Keep arrow list spacing unchanged; make disc/stripe a bit tighter.
-        const isArrowList = listType === "arrow";
-        const isStripeList = listType === "stripe";
+        const isArrowList = itemListType === "arrow";
+        const isStripeList = itemListType === "stripe";
         // Horizontal (X-axis) gap between marker and text.
         // Keep it clearly visible without introducing large left padding.
         const markerTextGap = isArrowList
@@ -327,16 +365,16 @@ export function renderRichTextToPdf({
           : isStripeList
           ? Math.max(1.15, liIndent * 0.52)
           : Math.max(0.95, liIndent * 0.42);
-        const listItemLineHeight = isArrowList ? lh * 1.22 : lh * 1.22;
+        // Same line height as normal paragraphs so list ↔ paragraph spacing matches the UI.
+        const listItemLineHeight = lh;
         const hasRenderableContent = (child) => {
           if (child.nodeType === 3) {
             return Boolean(child.textContent?.replace(/\s+/g, " ").trim());
           }
           if (child.nodeType !== 1) return false;
           const childTag = child.tagName.toLowerCase();
-          if (childTag === "br" || childTag === "ul" || childTag === "ol") {
-            return false;
-          }
+          if (childTag === "br" || childTag === "p") return true;
+          if (childTag === "ul" || childTag === "ol") return false;
           return Boolean(child.textContent?.replace(/\s+/g, " ").trim());
         };
 
@@ -346,7 +384,7 @@ export function renderRichTextToPdf({
               isClipped = true;
               return;
             }
-            drawListMarker(listType, symbolX, y, listItemLineHeight);
+            drawListMarker(itemListType, symbolX, y, listItemLineHeight);
             isMarkerDrawn = true;
           }
 
@@ -368,9 +406,13 @@ export function renderRichTextToPdf({
                 availableWidth,
                 listItemLineHeight
               );
+            } else if (maxY == null || y + listItemLineHeight <= maxY + 0.001) {
+              y += listItemLineHeight;
+            } else {
+              isClipped = true;
             }
           } else {
-            renderNode(child, indent + markerTextGap, listType);
+            renderNode(child, indent + markerTextGap, itemListType, {});
           }
         };
 
@@ -378,12 +420,24 @@ export function renderRichTextToPdf({
           if (isClipped) return;
           renderChildWithMarker(child);
         });
-        if (!isMarkerDrawn) return;
-        if (maxY != null && y + itmSpacing > maxY + 0.001) {
+        if (!isMarkerDrawn) {
+          if (maxY != null && y + listItemLineHeight > maxY + 0.001) {
+            isClipped = true;
+            return;
+          }
+          drawListMarker(itemListType, symbolX, y, listItemLineHeight);
+          isMarkerDrawn = true;
+          y += listItemLineHeight;
+        }
+        const afterItem =
+          ctx.isLastListItem === true
+            ? Math.max(0, lh * 0.08)
+            : itmSpacing;
+        if (maxY != null && y + afterItem > maxY + 0.001) {
           isClipped = true;
           return;
         }
-        y += itmSpacing;
+        y += afterItem;
         return;
       }
 
@@ -415,14 +469,18 @@ export function renderRichTextToPdf({
         return;
       }
 
-      // Default: traverse children
-      node.childNodes.forEach((child) => {
-        if (isClipped) return;
-        renderNode(child, indent, listType);
+      // Default: traverse children (pass next element sibling for block-gap hints).
+      // Drop list-only flags so nested blocks do not inherit `isLastListItem`.
+      const restCtx = { ...ctx };
+      delete restCtx.isLastListItem;
+      forEachChildWithNext(node, indent, listType, restCtx, (child, childCtx) => {
+        renderNode(child, indent, listType, childCtx);
       });
     }
   };
 
-  tempDiv.childNodes.forEach((node) => renderNode(node));
+  forEachChildWithNext(tempDiv, 0, "disc", {}, (child, childCtx) => {
+    renderNode(child, 0, "disc", childCtx);
+  });
   return y;
 }

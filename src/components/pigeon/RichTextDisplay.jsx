@@ -11,8 +11,13 @@ export default function RichTextDisplay({
   className,
   block = true,
 }) {
-  const normalized = html != null ? String(html).replace(/\\n/g, "\n").trim() : "";
-  if (!normalized) {
+  const normalized =
+    html != null
+      ? String(html)
+          .replace(/\\n/g, "\n")
+          .replace(/<p>\s*<\/p>/gi, "<p><br /></p>")
+      : "";
+  if (normalized.length === 0) {
     if (fallback == null) return null;
     return (
       <span className={cn(block && "block", className)}>{fallback}</span>
@@ -22,7 +27,7 @@ export default function RichTextDisplay({
   if (!/<[a-z][\s\S]*>/i.test(normalized)) {
     return (
       <span
-        className={cn("whitespace-pre-line", block && "block", className)}
+        className={cn("whitespace-pre-wrap", block && "block", className)}
       >
         {normalized}
       </span>
