@@ -209,7 +209,7 @@ export const exportPedigreeToPDF = async (
     };
 
     // Helper: Add text with word wrap
-    const addWrappedText = (text, x, y, maxWidth, lineHeight, maxLines) => {
+    const addWrappedText = (text, x, y, maxWidth, lineHeight = 4, maxLines) => {
       // Normalize text first - remove multiple spaces
       const normalizedText = String(text).replace(/ {1,}/g, ' ').trim();
       
@@ -339,7 +339,7 @@ export const exportPedigreeToPDF = async (
           leftMargin,
           currentY,
           contentWidth,
-          3,
+          3.7,
           nameLines
         );
         currentY += 1;
@@ -381,7 +381,7 @@ export const exportPedigreeToPDF = async (
               letterBImage,
               "PNG",
               leftMargin,
-              currentY + 3 - 2.5,
+              currentY + 3.7 - 2.5,
               badgeWidth,
               badgeWidth
             );
@@ -390,12 +390,12 @@ export const exportPedigreeToPDF = async (
 
         // Draw any remaining wrapped lines beneath the first
         for (let i = 1; i < ownerLines.length; i++) {
-          currentY += 3; // line height similar to addWrappedText
+          currentY += 3.7; // line height similar to addWrappedText
           pdf.text(ownerLines[i], leftMargin, currentY);
         }
 
         // Advance currentY to leave a small gap after owner block
-        currentY += 3;
+        currentY += 3.7;
       }
 
       // === COLOR NAME ===
@@ -408,7 +408,7 @@ export const exportPedigreeToPDF = async (
           leftMargin,
           currentY,
           contentWidth,
-          3,
+          3.7,
           1
         );
         currentY += 0;
@@ -462,11 +462,13 @@ export const exportPedigreeToPDF = async (
             x: leftMargin,
             y: currentY,
             maxWidth: contentWidth,
-            lineHeight: 2,
+            lineHeight: 2.85,
+            blockSpacing: 1.5,
+            itemSpacing: 0.95,
             maxHeight: descriptionSpace,
           });
         } else {
-          const maxDescLines = Math.floor(descriptionSpace / 3);
+          const maxDescLines = Math.floor(descriptionSpace / 3.65);
           if (maxDescLines > 0) {
             const normalizedDescription = descriptionText
               .replace(/[ \t]+/g, " ")
@@ -477,7 +479,7 @@ export const exportPedigreeToPDF = async (
               leftMargin,
               currentY,
               contentWidth,
-              3,
+              3.7,
               maxDescLines
             );
           }
@@ -500,11 +502,13 @@ export const exportPedigreeToPDF = async (
               x: leftMargin,
               y: currentY,
               maxWidth: contentWidth,
-              lineHeight: 2.2,
+              lineHeight: 3.05,
+              blockSpacing: 1.35,
+              itemSpacing: 0.85,
               maxHeight: remainingSpace,
             });
           } else {
-            const maxAchvLines = Math.floor(remainingSpace / 2.5);
+            const maxAchvLines = Math.floor(remainingSpace / 3.1);
             if (maxAchvLines > 0) {
               const normalizedAchievements = achievementsText
                 .replace(/[ \t]+/g, " ")
@@ -515,7 +519,7 @@ export const exportPedigreeToPDF = async (
                 leftMargin,
                 currentY,
                 contentWidth,
-                2.5,
+                3.05,
                 maxAchvLines
               );
             }

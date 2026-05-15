@@ -397,7 +397,7 @@ export const exportPedigreeToJPG = async (
       pdf.line(midX, y2, x2, y2);
     };
 
-    const addWrappedText = (text, x, y, maxWidth, lineHeight, maxLines) => {
+    const addWrappedText = (text, x, y, maxWidth, lineHeight = 4, maxLines) => {
       const normalizedText = String(text).replace(/ {1,}/g, " ").trim();
       const lines = pdf.splitTextToSize(normalizedText, maxWidth);
       const limitedLines = lines.slice(0, maxLines);
@@ -519,7 +519,7 @@ export const exportPedigreeToJPG = async (
           leftMargin,
           currentY,
           contentWidth,
-          3,
+          3.7,
           nameLines
         );
         currentY += 1;
@@ -555,7 +555,7 @@ export const exportPedigreeToJPG = async (
               letterBImage,
               "PNG",
               leftMargin,
-              currentY + 3 - 2.5,
+              currentY + 3.7 - 2.5,
               badgeWidth,
               badgeWidth
             );
@@ -563,11 +563,11 @@ export const exportPedigreeToJPG = async (
         }
 
         for (let i = 1; i < ownerLines.length; i++) {
-          currentY += 3;
+          currentY += 3.7;
           pdf.text(ownerLines[i], leftMargin, currentY);
         }
 
-        currentY += 3;
+        currentY += 3.7;
       }
 
       // === COLOR NAME ===
@@ -580,7 +580,7 @@ export const exportPedigreeToJPG = async (
           leftMargin,
           currentY,
           contentWidth,
-          3,
+          3.7,
           1
         );
         currentY += 0;
@@ -625,11 +625,13 @@ export const exportPedigreeToJPG = async (
             x: leftMargin,
             y: currentY,
             maxWidth: contentWidth,
-            lineHeight: 2,
+            lineHeight: 2.85,
+            blockSpacing: 1.5,
+            itemSpacing: 0.95,
             maxHeight: descriptionSpace,
           });
         } else {
-          const maxDescLines = Math.floor(descriptionSpace / 3);
+          const maxDescLines = Math.floor(descriptionSpace / 3.65);
           if (maxDescLines > 0) {
             const normalizedDescription = descriptionText
               .replace(/[ \t]+/g, " ")
@@ -640,7 +642,7 @@ export const exportPedigreeToJPG = async (
               leftMargin,
               currentY,
               contentWidth,
-              3,
+              3.7,
               maxDescLines
             );
           }
@@ -663,11 +665,13 @@ export const exportPedigreeToJPG = async (
               x: leftMargin,
               y: currentY,
               maxWidth: contentWidth,
-              lineHeight: 2.2,
+              lineHeight: 3.05,
+              blockSpacing: 1.35,
+              itemSpacing: 0.85,
               maxHeight: remainingSpace,
             });
           } else {
-            const maxAchvLines = Math.floor(remainingSpace / 2.5);
+            const maxAchvLines = Math.floor(remainingSpace / 3.1);
             if (maxAchvLines > 0) {
               const normalizedAchievements = achievementsText
                 .replace(/[ \t]+/g, " ")
@@ -678,7 +682,7 @@ export const exportPedigreeToJPG = async (
                 leftMargin,
                 currentY,
                 contentWidth,
-                2.5,
+                3.05,
                 maxAchvLines
               );
             }
