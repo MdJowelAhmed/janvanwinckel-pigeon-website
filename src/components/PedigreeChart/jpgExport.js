@@ -1,6 +1,7 @@
 import { baseUrlApi } from "@/redux/baseUrl/baseUrlApi";
 import { getCode } from "country-list";
 import { renderRichTextToPdf } from "@/lib/richTextPdf";
+import { addresultsArrayToHtml } from "@/lib/richTextUtils";
 
 // ---------------------------------------------------------------------------
 // Canvas-based adapter that mimics the subset of jsPDF API used by
@@ -152,10 +153,55 @@ const createCanvasPdf = ({
       }
     },
 
+    lines: (segments, xMm, yMm, scale, style, closed) => {
+      let segs = segments;
+      let x0 = xMm;
+      let y0 = yMm;
+      if (typeof segments === "number") {
+        const tmp = yMm;
+        y0 = xMm;
+        x0 = segments;
+        segs = tmp;
+      }
+      const scaleArr = Array.isArray(scale) ? scale : [1, 1];
+      const sx = scaleArr[0] ?? 1;
+      const sy = scaleArr[1] ?? 1;
+      const isClosed = Boolean(closed);
+      const st = style == null ? "S" : style;
+      const doFill = st === "F" || st === "FD" || st === "DF";
+      const doStroke = st === "S" || st === "FD" || st === "DF";
+
+      let x = toPx(x0);
+      let y = toPx(y0);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      for (const leg of segs || []) {
+        if (leg && leg.length >= 2) {
+          x += toPx(leg[0] * sx);
+          y += toPx(leg[1] * sy);
+          ctx.lineTo(x, y);
+        }
+      }
+      if (isClosed) ctx.closePath();
+      if (doFill) {
+        ctx.fillStyle = state.fillColor;
+        ctx.fill();
+      }
+      if (doStroke && st !== "F") {
+        ctx.strokeStyle = state.drawColor;
+        ctx.lineWidth = Math.max(1, toPx(state.lineWidthMm));
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        ctx.stroke();
+      }
+    },
+
     line: (x1Mm, y1Mm, x2Mm, y2Mm) => {
       ctx.strokeStyle = state.drawColor;
       ctx.lineWidth = Math.max(1, toPx(state.lineWidthMm));
-      ctx.lineCap = "butt";
+      // ctx.lineCap = "butt";
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
       ctx.beginPath();
       ctx.moveTo(toPx(x1Mm), toPx(y1Mm));
       ctx.lineTo(toPx(x2Mm), toPx(y2Mm));
@@ -397,7 +443,7 @@ export const exportPedigreeToJPG = async (
       pdf.line(midX, y2, x2, y2);
     };
 
-    const addWrappedText = (text, x, y, maxWidth, lineHeight, maxLines) => {
+    const addWrappedText = (text, x, y, maxWidth, lineHeight = 3.5, maxLines) => {
       const normalizedText = String(text).replace(/ {1,}/g, " ").trim();
       const lines = pdf.splitTextToSize(normalizedText, maxWidth);
       const limitedLines = lines.slice(0, maxLines);
@@ -519,7 +565,7 @@ export const exportPedigreeToJPG = async (
           leftMargin,
           currentY,
           contentWidth,
-          3,
+          3.35,
           nameLines
         );
         currentY += 1;
@@ -555,7 +601,7 @@ export const exportPedigreeToJPG = async (
               letterBImage,
               "PNG",
               leftMargin,
-              currentY + 3 - 2.5,
+              currentY + 3.35 - 2.5,
               badgeWidth,
               badgeWidth
             );
@@ -563,11 +609,11 @@ export const exportPedigreeToJPG = async (
         }
 
         for (let i = 1; i < ownerLines.length; i++) {
-          currentY += 3;
+          currentY += 3.35;
           pdf.text(ownerLines[i], leftMargin, currentY);
         }
 
-        currentY += 3;
+        currentY += 3.35;
       }
 
       // === COLOR NAME ===
@@ -580,7 +626,7 @@ export const exportPedigreeToJPG = async (
           leftMargin,
           currentY,
           contentWidth,
-          3,
+          3.35,
           1
         );
         currentY += 0;
@@ -588,20 +634,24 @@ export const exportPedigreeToJPG = async (
 
       const availableSpace = y + height - currentY - 3;
 
-      const descriptionText =
-        typeof data?.description === "string"
-          ? data.description
-          : data?.description == null
-          ? ""
-          : String(data.description);
+      let descriptionText = "";
+      if (Array.isArray(data?.description)) {
+        descriptionText = addresultsArrayToHtml(
+          data.description.map((item) => (item == null ? "" : String(item)))
+        );
+      } else if (typeof data?.description === "string") {
+        descriptionText = data.description;
+      } else if (data?.description != null) {
+        descriptionText = String(data.description);
+      }
       const hasDescription =
         descriptionText && descriptionText.trim().length > 0;
 
       let achievementsText = "";
       if (Array.isArray(data?.achievements)) {
-        achievementsText = data.achievements
-          .map((item) => (item == null ? "" : String(item)))
-          .join("\n");
+        achievementsText = addresultsArrayToHtml(
+          data.achievements.map((item) => (item == null ? "" : String(item)))
+        );
       } else if (data?.achievements != null) {
         achievementsText = String(data.achievements);
       }
@@ -625,11 +675,13 @@ export const exportPedigreeToJPG = async (
             x: leftMargin,
             y: currentY,
             maxWidth: contentWidth,
-            lineHeight: 2,
+            lineHeight: 2.55,
+            blockSpacing: 1.15,
+            itemSpacing: 0.72,
             maxHeight: descriptionSpace,
           });
         } else {
-          const maxDescLines = Math.floor(descriptionSpace / 3);
+          const maxDescLines = Math.floor(descriptionSpace / 3.4);
           if (maxDescLines > 0) {
             const normalizedDescription = descriptionText
               .replace(/[ \t]+/g, " ")
@@ -640,7 +692,7 @@ export const exportPedigreeToJPG = async (
               leftMargin,
               currentY,
               contentWidth,
-              3,
+              3.35,
               maxDescLines
             );
           }
@@ -663,11 +715,13 @@ export const exportPedigreeToJPG = async (
               x: leftMargin,
               y: currentY,
               maxWidth: contentWidth,
-              lineHeight: 2.2,
+              lineHeight: 2.75,
+              blockSpacing: 1.1,
+              itemSpacing: 0.68,
               maxHeight: remainingSpace,
             });
           } else {
-            const maxAchvLines = Math.floor(remainingSpace / 2.5);
+            const maxAchvLines = Math.floor(remainingSpace / 2.92);
             if (maxAchvLines > 0) {
               const normalizedAchievements = achievementsText
                 .replace(/[ \t]+/g, " ")
@@ -678,7 +732,7 @@ export const exportPedigreeToJPG = async (
                 leftMargin,
                 currentY,
                 contentWidth,
-                2.5,
+                2.75,
                 maxAchvLines
               );
             }
