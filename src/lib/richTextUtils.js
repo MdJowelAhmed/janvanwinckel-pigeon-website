@@ -30,6 +30,52 @@ export function sanitizeRichHtml(html) {
     .replace(/\s*on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 }
 
+/**
+ * Split plain text on newlines only (one segment per line).
+ * Commas do not start a new block — each `addresults` array element is its own paragraph.
+ */
+export function splitPlainAddresultsToSegments(text) {
+  if (text == null || text === "") return [];
+  return String(text)
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Normalize API `addresults` (array of strings, plain string, or HTML)
+ * into HTML the TipTap field expects (one paragraph per array element).
+ */
+export function addresultsToEditorHtml(raw) {
+  if (raw == null) return "";
+  if (typeof raw === "string") {
+    const t = raw.trim();
+    if (!t) return "";
+    if (/<\s*[a-z]/i.test(t)) {
+      return sanitizeRichHtml(t);
+    }
+    return addresultsArrayToHtml(splitPlainAddresultsToSegments(t));
+  }
+  if (!Array.isArray(raw) || raw.length === 0) return "";
+
+  const segments = [];
+  for (const item of raw) {
+    const s = String(item ?? "").trim();
+    if (!s) continue;
+    if (/^<p[\s>]/i.test(s) || /^<(ul|ol)[\s>]/i.test(s)) {
+      segments.push(s);
+      continue;
+    }
+    if (/<[a-z][\s\S]*>/i.test(s)) {
+      segments.push(s);
+      continue;
+    }
+    // One API array element ≡ one paragraph; only split on newlines inside a cell.
+    segments.push(...splitPlainAddresultsToSegments(s));
+  }
+  return addresultsArrayToHtml(segments);
+}
+
 export function addresultsArrayToHtml(arr) {
   if (!arr || !Array.isArray(arr) || arr.length === 0) return "";
   return arr

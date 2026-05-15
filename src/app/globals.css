@@ -325,17 +325,17 @@ h3 {
   margin: 0rem 0;
 }
 .rich-text-display p {
-  margin: 0.12rem;
+  margin: 0.05rem 0;
 }
 .rich-text-display p:first-child {
   margin-top: 0;
 }
 .rich-text-display p:last-child {
-  margin-bottom: 0.12rem;
+  margin-bottom: 0.05rem;
 }
 .rich-text-display li {
-  margin-bottom: 0.12rem;
-  line-height: 1.5;
+  margin-bottom: 0.06rem;
+  line-height: 1.4;
 }
 
 
@@ -364,7 +364,7 @@ h3 {
 .tiptap-editor li[data-bullet-style],
 .rich-text-display li[data-bullet-style] {
   position: relative;
-  margin-bottom: 0.12rem;
+  margin-bottom: 0.06rem;
   line-height: 1.1;
 }
 
@@ -394,7 +394,7 @@ h3 {
   content: "→";
   position: absolute;
   left: 0;
-  color: #000;
+  color: #000 ;
   font-weight: 600;
 }
 
