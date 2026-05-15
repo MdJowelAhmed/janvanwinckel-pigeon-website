@@ -447,7 +447,7 @@ const PigeonTable = ({ data, isLoading, onEdit }) => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-48">
-                              {pigeon?.user?._id === userId &&
+                              {/* {pigeon?.user?._id === userId &&
                                 !pigeon?.iconic && (
                                   <DropdownMenuItem
                                     onClick={() => onEdit(pigeon._id)}
@@ -456,8 +456,14 @@ const PigeonTable = ({ data, isLoading, onEdit }) => {
                                     <Edit className="h-4 w-4 mr-2" />
                                     Edit Pigeon
                                   </DropdownMenuItem>
-                                )}
-
+                                )} */}
+     <DropdownMenuItem
+                                    onClick={() => onEdit(pigeon._id)}
+                                    className="cursor-pointer"
+                                  >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Pigeon
+                                  </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() => handleView(pigeon._id)}
                                 className="cursor-pointer"

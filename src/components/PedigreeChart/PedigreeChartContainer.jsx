@@ -350,7 +350,7 @@ const PigeonNode = ({ data, activePedigreeId }) => {
         {data.description && (
           <div className="">
             <h2 className="text-black italic">
-              <RichTextDisplay html={data?.description} fallback="N/A" />
+              <RichTextDisplay html={data?.description}  />
             </h2>
           </div>
         )}
@@ -361,7 +361,7 @@ const PigeonNode = ({ data, activePedigreeId }) => {
               className="text-black whitespace-pre-line break-words max-w-[250px] overflow-hidden"
               style={{ wordBreak: "break-word", overflowWrap: "break-word" }}
             >
-              <RichTextDisplay html={data.achievements} fallback="N/A" />
+              <RichTextDisplay html={data.achievements}  />
             </h2>
           </div>
         )}

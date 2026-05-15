@@ -26,7 +26,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
-  addresultsArrayToHtml,
+  addresultsToEditorHtml,
   htmlToAddresultsArray,
   sanitizeRichHtml,
 } from "@/lib/richTextUtils";
@@ -494,11 +494,9 @@ const AddPigeonContainer = ({ pigeonId }) => {
         motherRingId: pigeon.motherRingId?.ringNumber || "",
         verified: pigeon.verified || false,
         iconic: pigeon.iconic || false,
-        // Keep TipTap content as HTML; backend expects addresults as array,
-        // but the editor works best with HTML (lists, bold/italic, etc.).
-        addresults: Array.isArray(pigeon.addresults)
-          ? addresultsArrayToHtml(pigeon.addresults)
-          : pigeon.addresults || "",
+        // TipTap wants HTML; backend stores an array. Legacy rows may be
+        // comma-joined plain text — addresultsToEditorHtml splits those into paragraphs.
+        addresults: addresultsToEditorHtml(pigeon.addresults),
         iconicScore: pigeon.iconicScore || 0,
       });
 
@@ -960,7 +958,6 @@ Son of Burj Khalifa
 Winner of the Dubai OLR
 5 times 1st price winner
 Bought for USD 50,000`}
-                        minHeightClass="min-h-[150px]"
                       />
                     )}
                   />
@@ -981,7 +978,6 @@ Bought for USD 50,000`}
 1st/828p Quiévrain 108km
 4th/3265p Melun 287km
 6th/3418p HotSpot 6 Dubai OLR`}
-                        minHeightClass="min-h-[150px]"
                       />
                     )}
                   />

@@ -1,9 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { addresultsArrayToHtml } from "@/lib/richTextUtils";
 
 /**
  * Renders stored HTML from TooltipRichTextField, or plain text with line breaks.
+ * `html` may be an `addresults`-style string[] — arrays are not stringified (which would insert commas).
  */
 export default function RichTextDisplay({
   html,
@@ -11,12 +13,15 @@ export default function RichTextDisplay({
   className,
   block = true,
 }) {
-  const normalized =
-    html != null
-      ? String(html)
-          .replace(/\\n/g, "\n")
-          .replace(/<p>\s*<\/p>/gi, "<p><br /></p>")
-      : "";
+  let raw =
+    html == null
+      ? ""
+      : Array.isArray(html)
+        ? addresultsArrayToHtml(html)
+        : String(html);
+  const normalized = raw
+    .replace(/\\n/g, "\n")
+    .replace(/<p>\s*<\/p>/gi, "<p><br /></p>");
   if (normalized.length === 0) {
     if (fallback == null) return null;
     return (
