@@ -31,31 +31,20 @@ export function sanitizeRichHtml(html) {
 }
 
 /**
- * Split legacy plain-text results (one blob or one array cell) into
- * separate lines for the rich editor: each newline, then each comma
- * (with optional following spaces), becomes its own segment.
+ * Split plain text on newlines only (one segment per line).
+ * Commas do not start a new block — each `addresults` array element is its own paragraph.
  */
 export function splitPlainAddresultsToSegments(text) {
   if (text == null || text === "") return [];
-  const out = [];
-  for (const line of String(text).split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    if (trimmed.includes(",")) {
-      for (const part of trimmed.split(/,\s*/)) {
-        const p = part.trim();
-        if (p) out.push(p);
-      }
-    } else {
-      out.push(trimmed);
-    }
-  }
-  return out;
+  return String(text)
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
 }
 
 /**
- * Normalize API `addresults` (array of strings, comma-joined string, or HTML)
- * into HTML the TipTap field expects (one paragraph per logical line).
+ * Normalize API `addresults` (array of strings, plain string, or HTML)
+ * into HTML the TipTap field expects (one paragraph per array element).
  */
 export function addresultsToEditorHtml(raw) {
   if (raw == null) return "";
@@ -81,6 +70,7 @@ export function addresultsToEditorHtml(raw) {
       segments.push(s);
       continue;
     }
+    // One API array element ≡ one paragraph; only split on newlines inside a cell.
     segments.push(...splitPlainAddresultsToSegments(s));
   }
   return addresultsArrayToHtml(segments);

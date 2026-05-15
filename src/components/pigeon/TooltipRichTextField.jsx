@@ -105,8 +105,8 @@ export default function TooltipRichTextField({
           class: cn(
             "tiptap-editor max-w-none px-3 py-3 text-sm text-gray-900 focus:outline-none",
             minHeightClass,
-            "[&_p]:my-1 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0",
-            "[&_ul]:my-1",
+            "[&_p]:my-0.5 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0",
+            "[&_ul]:my-0.5",
             editorClassName
           ),
         },
