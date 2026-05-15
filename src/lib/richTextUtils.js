@@ -30,6 +30,62 @@ export function sanitizeRichHtml(html) {
     .replace(/\s*on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, "");
 }
 
+/**
+ * Split legacy plain-text results (one blob or one array cell) into
+ * separate lines for the rich editor: each newline, then each comma
+ * (with optional following spaces), becomes its own segment.
+ */
+export function splitPlainAddresultsToSegments(text) {
+  if (text == null || text === "") return [];
+  const out = [];
+  for (const line of String(text).split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.includes(",")) {
+      for (const part of trimmed.split(/,\s*/)) {
+        const p = part.trim();
+        if (p) out.push(p);
+      }
+    } else {
+      out.push(trimmed);
+    }
+  }
+  return out;
+}
+
+/**
+ * Normalize API `addresults` (array of strings, comma-joined string, or HTML)
+ * into HTML the TipTap field expects (one paragraph per logical line).
+ */
+export function addresultsToEditorHtml(raw) {
+  if (raw == null) return "";
+  if (typeof raw === "string") {
+    const t = raw.trim();
+    if (!t) return "";
+    if (/<\s*[a-z]/i.test(t)) {
+      return sanitizeRichHtml(t);
+    }
+    return addresultsArrayToHtml(splitPlainAddresultsToSegments(t));
+  }
+  if (!Array.isArray(raw) || raw.length === 0) return "";
+
+  const segments = [];
+  for (const item of raw) {
+    const s = String(item ?? "").trim();
+    if (!s) continue;
+    if (/^<p[\s>]/i.test(s) || /^<(ul|ol)[\s>]/i.test(s)) {
+      segments.push(s);
+      continue;
+    }
+    if (/<[a-z][\s\S]*>/i.test(s)) {
+      segments.push(s);
+      continue;
+    }
+    segments.push(...splitPlainAddresultsToSegments(s));
+  }
+  return addresultsArrayToHtml(segments);
+}
+
 export function addresultsArrayToHtml(arr) {
   if (!arr || !Array.isArray(arr) || arr.length === 0) return "";
   return arr

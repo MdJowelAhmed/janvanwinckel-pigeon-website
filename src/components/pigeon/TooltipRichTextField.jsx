@@ -56,7 +56,9 @@ export default function TooltipRichTextField({
   placeholder,
   className,
   editorClassName,
-  minHeightClass = "min-h-[120px]",
+  minHeightClass = "min-h-[126px]",
+  /** Fixed-height body; content taller than this scrolls vertically */
+  editorBodyClassName = "h-[180px] overflow-y-auto overflow-x-hidden",
 }) {
   const isInternalChange = useRef(false);
   const onChangeRef = useRef(onChange);
@@ -223,7 +225,14 @@ export default function TooltipRichTextField({
           </DropdownMenu>
         </div>
 
-        <EditorContent editor={editor} className="rounded-b-lg focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-inset" />
+        <div
+          className={cn(
+            "rounded-b-lg focus-within:ring-2 focus-within:ring-teal-500 focus-within:ring-inset",
+            editorBodyClassName
+          )}
+        >
+          <EditorContent editor={editor} />
+        </div>
       </div>
     </Tooltip.Provider>
   );
